@@ -8,69 +8,80 @@ grammar L2SMT;
 }
 
 @members {
-    public enum Type { Bool, Int, Real, String, AttrDS, AttrE, Role, DS }
+    private enum Type { Bool, Int, Real, String, AttrDS, AttrE, Role, DS }
     private String currentLabel;
     private int currentLabelCounter = 0;
-    // public Map<String, Type> atoms = new HashMap<>();
-    public Set<String> atoms = new HashSet<>();
-    public Map<String, Type> tempType = new HashMap<>();
-    public Map<String, List<List<String>>> owning = new HashMap<>();
+    private Set<String> atoms = new HashSet<>();
+    private Map<String, Type> tempType = new HashMap<>();
+    private Map<String, List<List<String>>> owning = new HashMap<>();
+    private Map<String, String> stringPool = new TreeMap<>();
+    private List<String> smt_expr = new LinkedList<>();
+    private List<String> smt_typeparam = new LinkedList<>();
+    private Type[] mutual_exclusive =  { Type.Bool, Type.Int, Type.Real, Type.String, Type.Role, Type.DS };
+    private StringBuilder __output = new StringBuilder();
 
-    public Map<String, String> stringPool = new TreeMap<>();
-    public List<String> smt_expr = new LinkedList<>();
-    public List<String> smt_typeparam = new LinkedList<>();
-    public Type[] mutual_exclusive =  { Type.Bool, Type.Int, Type.Real, Type.String, Type.Role, Type.DS };
-    //public Type[] mutual_exclusive2 =  { Type.AttrDS, Type.AttrE, Type.Role, Type.DS };
 
-    public String getCurrentLabel() {
+    /**
+    * Returns translated SMT
+    */  
+    public String getSMT() {
+        return __output.toString();
+    }
+
+
+    /**
+    * Returns current label
+    */    
+    private String getCurrentLabel() {
         return currentLabel;
     }
 
-    public void setCurrentLabel(String label) {
+
+    /**
+    * Set current label
+    */    
+    private void setCurrentLabel(String label) {
         currentLabel = label.substring(1,label.length()-1).replace(" ", "");
         currentLabelCounter = 0;
     }
 
-    public boolean areMutualExclusive(Type t1, Type t2) {
-        return ( (Arrays.asList(mutual_exclusive).contains(t1) && Arrays.asList(mutual_exclusive).contains(t2))
-               );
+
+    /**
+    * Returns true if two type are incompatible
+    */
+    private boolean areMutualExclusive(Type t1, Type t2) {
+        return ( (Arrays.asList(mutual_exclusive).contains(t1) && Arrays.asList(mutual_exclusive).contains(t2)) );
     }
 
-    public void updateOwner(String name, List<String> nple) {
+
+    /**
+    * Adds fe
+    */
+    private void updateOwner(String name, List<String> nple) {
         if (!owning.containsKey(name)) owning.put(name, new LinkedList<List<String>>());      
         
         List<List<String>> o = owning.get(name);
 
         if (nple != null) o.add(nple);
     }
-    
-    public void updateAtom(String name, Type type) {
+
+
+    /**
+    * Adds Atom name and its type to pools
+    */
+    private void updateAtom(String name, Type type) {
         atoms.add(name);
 
         if (type != null) {
             updateOwner("is"+type.toString(), Arrays.asList(new String[] { name }));
         }
-
-        // System.out.print(name + " --> ");
-        // System.out.println(tempType); 
-        // if (tempType.containsKey(name)) return;
-
-        // if (!atoms.containsKey(name)) {
-        //     atoms.put(name, type);
-        // } else if (type != null) {
-        //     Type currentType = atoms.get(name);
-        //     if (currentType == null || currentType == type) {
-        //         atoms.put(name, type);
-        //     } else {
-        //         if (areMutualExclusive(type, currentType)) System.err.println(name+" can't be both "+type+ " and " + currentType);
-        //     }
-        // }
     }
 
+
     /**
-    *   Translates operators
+    *   Translates L operators in SMT operators
     */
-    public String transOp(String op) {
+    private String transOp(String op) {
         String trans = op;
         switch (op) {
             case "&&":     trans = "and"; break;     
@@ -82,11 +93,19 @@ grammar L2SMT;
         return trans;
     }
 
-    public Type getType(String pool, String name) {
-        return Type.Bool;
+
+    /**
+    * GetType of AttrE, AttrDS, Var
+    */
+    private Type getType(String pool, String name) {
+        return Type.Bool; // ToDo
     }
 
-    public Type cType(Type t1, Type t2, String error) {
+
+    /**
+    * Check that type of t1 is the same of t2, otherwise exit with error!
+    */
+    private Type cType(Type t1, Type t2, String error) {
         if (t1 != t2) {
             System.err.println("["+currentLabel+"]\nERROR: " + error);
             System.exit(-1);
@@ -95,20 +114,27 @@ grammar L2SMT;
         return t1;
     }
 
-    public void addExpr(String expr) {
+
+    /**
+    * Add expression to evaluation set
+    */
+    private void addExpr(String expr) {
         smt_expr.add((currentLabelCounter == 0 ? "\n; ["+currentLabel+"]\n":"")+"(assert (! "+expr+" :named "+currentLabel+"_"+(currentLabelCounter++)+"))");
     }
 
-    private StringBuilder __output = new StringBuilder();
-    public void out(String s) {
+
+    /**
+    * Service method used by printSMT for 
+    */
+    private void out(String s) {
         __output.append(s);
     }
 
-    public String getSMT() {
-        return __output.toString();
-    }
 
-    public void printSMT() {
+    /**
+    * Generate SMT using out
+    */
+    private void printSMT() {
         String tmp;
         int i;
 
@@ -275,7 +301,11 @@ grammar L2SMT;
         // System.out.println(owning);
     }
 
-    public String addTempType(String var, Type t) {
+
+    /**
+    * Add a type assertion for the Quantified Variable (it will be asserted to be an Atom, but after domain will be restricted by getQuantifierTypes)
+    */
+    private String addQuantifierType(String var, Type t) {
         if (t == Type.AttrDS || t == Type.AttrE || t == Type.DS || t == Type.Role) {
             tempType.put(var, t);
 
@@ -285,7 +315,11 @@ grammar L2SMT;
         }
     }
 
-    public String getTempType() {
+
+    /**
+    * Return domain assertions about quantified variables
+    */
+    private String getQuantifierTypes() {
         String ret = "";
 
         if (tempType.size() > 1) ret = "(and ";
@@ -303,7 +337,7 @@ grammar L2SMT;
     /**
     * Adds a string to the pool and returns an uid
     */
-    public String addStringPool(String s) {
+    private String addStringPool(String s) {
         s = s.replace("\"","");
         if (!stringPool.containsKey(s)) {
             stringPool.put(s, "string"+stringPool.size());
@@ -312,20 +346,33 @@ grammar L2SMT;
         return stringPool.get(s);
     }
 
-    public String valueOfOrNot(String s) {
-        if (NumberUtils.isNumber(s)) {
+
+    /**
+    * Translate values using valueOf or not
+    */
+    private String valueOfOrNot(String s) {
+        if (NumberUtils.isNumber(s)) { // ToDo: consider other cases than numbers
             return s;
         } else {
             return " (valueOf " + s + " ) ";
         }
-        //String s2 = s.trim().toLowerCase();
-        //if (s2.equals("true") || s2.equals("false")) {
-        //    return s;
-        //} else {
-        //    return " (valueOf "+s+")";  
-        // }
     }
 }
+
+
+
+
+
+
+
+
+
+
+// ------------------------------- GRAMMAR -------------------------------
+
+
+
+
 
 
 program returns [String s]:    
@@ -333,11 +380,11 @@ program returns [String s]:
 
 pred returns [String s, Type t]:
             op=('FORALL'|'EXISTS')                                   { $s = "("+($op.text.equals("FORALL") ? "forall" : "exists")+" ("; }
-            v=ID ':' ty=TYPE                                         { $s += addTempType($v.text, Type.valueOf($ty.text)); }
-            (',' v=ID ':' ty=TYPE                                    { $s += addTempType($v.text, Type.valueOf($ty.text)); })* 
+            v=ID ':' ty=TYPE                                         { $s += addQuantifierType($v.text, Type.valueOf($ty.text)); }
+            (',' v=ID ':' ty=TYPE                                    { $s += addQuantifierType($v.text, Type.valueOf($ty.text)); })* 
             '{' p=pred '}'                                           {
                                                                        $t = cType($p.t, Type.Bool, $op.text + " predicate should be Bool"); 
-                                                                       $s += ") (=> "+getTempType()+" "+$p.s+"))"; 
+                                                                       $s += ") (=> "+getQuantifierTypes()+" "+$p.s+"))"; 
                                                                      }
     |       p1=pred op=(AND|OR) p2=pred                              {
                                                                        //cType($p1.t, Type.Bool, $op.text + " operands should be Bool");
