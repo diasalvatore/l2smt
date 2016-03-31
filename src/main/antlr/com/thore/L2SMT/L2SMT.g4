@@ -7,19 +7,93 @@ grammar L2SMT;
     import org.apache.commons.lang3.math.*;
 }
 
-@members {
+@parser::members {
+    private class Function {
+        private String name;
+        private int parameters;
+
+        private List<List<String>> tuples = new LinkedList<>();
+
+        public Function(String name, int parameters) {
+            this.name = name;
+            this.parameters = parameters;
+        }
+
+        public void addTuple(List<String> tuple) {
+            if (tuple != null) {
+                tuples.add(tuple);
+
+                if (tuple.size() > parameters) parameters = tuple.size();
+            }
+        }
+
+        public boolean equals(Object o) {
+            if (o == null) return false;
+            if (o.getClass() != this.getClass()) return false;
+                
+            Function f = (Function)o;
+            return (f.name.toLowerCase().equals(this.name.toLowerCase()));
+        }
+
+        public String getSMT() {
+            StringBuilder sb = new StringBuilder("");
+            int i;
+
+            if (tuples.size() == 0) {
+                sb.append("false");
+            } else {
+                sb.append(" (if (or \n  ");
+    
+                for (List<String> t : tuples) {
+                    if (t.size() > 1) sb.append(" (and");
+
+                    i = 0;
+                    for (String val : t) {
+                        sb.append(" (= p"+(i++)+" "+val+")");
+                    }
+
+                    if (t.size() > 1) sb.append(")");
+                    sb.append("\n  ");
+                }
+                sb.append(") true false)");
+            }
+            
+            // return
+            StringBuilder args = new StringBuilder();
+            for (i=0;i<parameters;i++) args.append("(p"+i+" Atom) ");
+            
+            return "(define-fun "+name+" ("+args.toString()+") Bool "+sb+")\n";
+        }
+    }
+
     private enum Type { Bool, Int, Real, String, AttrDS, AttrE, Role, DS }
     private String currentLabel;
     private int currentLabelCounter = 0;
     private Set<String> atoms = new HashSet<>();
     private Map<String, Type> tempType = new HashMap<>();
-    private Map<String, List<List<String>>> owning = new HashMap<>();
+    private Map<String, Function> functions = new HashMap<>();
     private Map<String, String> stringPool = new TreeMap<>();
     private List<String> smt_expr = new LinkedList<>();
     private List<String> smt_typeparam = new LinkedList<>();
     private Type[] mutual_exclusive =  { Type.Bool, Type.Int, Type.Real, Type.String, Type.Role, Type.DS };
     private StringBuilder __output = new StringBuilder();
 
+
+    /**
+    * Fake constructor
+    */
+    public void init() {
+        // Declaring all is* function type
+        for (Type t : Type.values()) functions.put("is"+t, new Function("is"+t, 1));
+
+        // Declaring all functions
+        functions.put("hasAttr", new Function("hasAttr", 2));
+        functions.put("hasRole", new Function("hasRole", 2));
+        functions.put("provides", new Function("provides", 2));
+        functions.put("consumes", new Function("consumes", 2));
+        functions.put("bond", new Function("bond", 2));
+        functions.put("uses", new Function("uses", 2));
+    }
 
     /**
     * Returns translated SMT
@@ -57,12 +131,17 @@ grammar L2SMT;
     /**
     * Adds fe
     */
-    private void updateOwner(String name, List<String> nple) {
-        if (!owning.containsKey(name)) owning.put(name, new LinkedList<List<String>>());      
-        
-        List<List<String>> o = owning.get(name);
+    private void updateFunction(String name, List<String> nple) {
+        Function f = null;
 
-        if (nple != null) o.add(nple);
+        if (!functions.containsKey(name)) {
+            f = new Function(name, 0);
+            functions.put(name, f);
+        } else {
+            f = functions.get(name);
+        }
+
+        if (nple != null) f.addTuple(nple);
     }
 
 
@@ -73,7 +152,7 @@ grammar L2SMT;
         atoms.add(name);
 
         if (type != null) {
-            updateOwner("is"+type.toString(), Arrays.asList(new String[] { name }));
+            updateFunction("is"+type.toString(), Arrays.asList(new String[] { name }));
         }
     }
 
@@ -138,32 +217,11 @@ grammar L2SMT;
         String tmp;
         int i;
 
-        // Declaring all is* function type
-        for (Type t : Type.values()) updateOwner("is"+t, null);
-        
-
         // OPTIONS
         out("(set-option :produce-unsat-cores true)\n\n");
         
         // PREAMBLE
         out("; sort\n(define-sort Atom () Int)\n\n");
-
-
-        // System.out.println(reorderedAtoms);
-
- //       out()    "\n; predicates\n"+
- //           "(declare-fun hasAttr (Atom Atom) Bool)\n"+
- //           "(declare-fun hasRole (Atom Atom) Bool)\n"+
- //           "(declare-fun provides (Atom Atom) Bool)\n"+
- //           "(declare-fun consumes (Atom Atom) Bool)\n"+
- //           "(declare-fun uses (Atom Atom) Bool)\n"+
- //           "(declare-fun valueOf (Atom) Int)\n"+
- //           "(declare-fun nameOf (Atom) Int)\n");
-//
- //       for (Type t : Type.values()) {
- //           out("(declare-fun is"+t+" (Atom) Bool)\n");
- //       }      
-
         out("\n; atoms\n");
         
         // atoms 
@@ -182,64 +240,14 @@ grammar L2SMT;
             out("(declare-const "+entry.getValue()+" Atom) ; "+entry.getKey()+"\n");        
         }
 
-
-
         // predicates
         out("\n; predicates\n");
-        out(
-            "(declare-fun valueOf (Atom) Int)\n"+
+        out("(declare-fun valueOf (Atom) Int)\n"+
             "(declare-fun nameOf (Atom) Int)\n");
 
-        // Map<Type, List<String>> reorderedAtoms = new HashMap<>();
-        // for (Type t : mutual_exclusive) reorderedAtoms.put(t, new LinkedList<String>());
-        // for (Map.Entry<String, Type> atom : atoms.entrySet()) reorderedAtoms.get(atom.getValue()).add(atom.getKey());
-
-        // for (Map.Entry<Type, List<String>> atom : reorderedAtoms.entrySet()) {
-        //     tmp = "(define-fun is"+atom.getKey()+" ((a Atom)) Bool";
-
-        //     if (atom.getValue().size() > 0) {
-        //         tmp += " (if (or";
-        //         for (String a : atom.getValue()) tmp += " (= a "+a+")";
-        //         tmp += ") true false)"; 
-        //     } else {
-        //         tmp += " false";
-        //     }
-
-        //     out(tmp+")\n");
-        // }
-
-
-        for (Map.Entry<String, List<List<String>>> f : owning.entrySet()) {
-            int max = 1;
-            tmp = "";
-
-            if (f.getValue().size() > 0) {
-                tmp += " (if (or";
-    
-                for (List<String> nple : f.getValue()) {
-                    if (nple.size() > max) max = nple.size();
-                    i = 0;
-
-                    if (nple.size() > 1) tmp += " (and";
-                    for (String val : nple) {
-                        tmp += " (= p"+(i++)+" "+val+")";
-                    }
-                    if (nple.size() > 1) tmp += ")";
-                }
-                tmp += ") true false)"; 
-            } else {
-                tmp += " false";
-            }
-
-            String tmp2 = "(define-fun "+f.getKey()+" (";
-            for (i=0;i<max;i++) tmp2 += "(p"+i+" Atom) ";
-            tmp2 += ") Bool "+"\n    "+tmp;
-
-            out(tmp2+"\n)\n");
+        for (Function f : functions.values()) {
+            out(f.getSMT());
         }
-
-
-
 
         // atoms unique val
         out("\n; atoms unique val \n");
@@ -376,6 +384,7 @@ grammar L2SMT;
 
 
 program returns [String s]:    
+            { init(); }
             (l=LABEL { setCurrentLabel($l.text); } (p=pred { addExpr($p.s); } EOP)+)+ { printSMT(); };
 
 pred returns [String s, Type t]:
@@ -519,13 +528,13 @@ function returns [String s, Type t]:
                                                     $t = Type.Bool;
                                                     $s = "(= (isAttrE "+$t1.s+") true)";
                                                     //updateAtom($t1.text, Type.AttrE); 
-                                                    updateOwner("isAttrE", Arrays.asList(new String[] { $t1.text })); 
+                                                    updateFunction("isAttrE", Arrays.asList(new String[] { $t1.text })); 
                                                   }
     |       'IsAttrDS(' t1=term ')'               { 
                                                     $t = Type.Bool;
                                                     $s = "(= (isAttrDS "+$t1.s+") true)";
                                                     //updateAtom($t1.text, Type.AttrDS); 
-                                                    updateOwner("isAttrDS", Arrays.asList(new String[] { $t1.text })); 
+                                                    updateFunction("isAttrDS", Arrays.asList(new String[] { $t1.text })); 
                                                   }   
     |       'NameOf(' t1=term ',' str=STRING ')'  { 
                                                     $t = Type.Bool;
@@ -536,28 +545,28 @@ function returns [String s, Type t]:
                                                     $s = "(= (hasAttr "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.AttrDS);  //Arrays.asList(new String[]{"one", "two", "three"});
-                                                    updateOwner("hasAttr", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                    updateFunction("hasAttr", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     |       'HasRole(' t1=term ',' t2=term ')'       { 
                                                     $t = Type.Bool;
                                                     $s = "(= (hasRole "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.Role); 
-                                                    updateOwner("hasRole", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                    updateFunction("hasRole", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     |       'Provides(' t1=term ',' t2=term  ')'     { 
                                                     $t = Type.Bool;
                                                     $s = "(= (provides "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.Role); 
-                                                    updateOwner("provides", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                    updateFunction("provides", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     |       'Consumes(' t1=term ',' t2=term  ')'     { 
                                                     $t = Type.Bool;
                                                     $s = "(= (consumes "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.Role); 
-                                                    updateOwner("consumes", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                    updateFunction("consumes", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     |       'Bond(' t1=term ',' t2=term  ',' t3=term ')' { 
                                                     $t = Type.Bool;
@@ -565,14 +574,15 @@ function returns [String s, Type t]:
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.DS); 
                                                     updateAtom($t3.text, Type.Role); 
-                                                    updateOwner("bond", Arrays.asList(new String[] { $t1.text, $t2.text, $t3.text })); 
-                                                    updateOwner("uses", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                    updateFunction("bond", Arrays.asList(new String[] { $t1.text, $t2.text, $t3.text })); 
+                                                    updateFunction("uses", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     |       'Uses(' t1=term ',' t2=term  ')'           { 
                                                     $t = Type.Bool;
                                                     $s = "(= (uses "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.DS); 
+                                                    // updateFunction("uses", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
     ; 
            
