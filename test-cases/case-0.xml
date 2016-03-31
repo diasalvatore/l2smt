@@ -1,0 +1,67 @@
+<request>
+	<attributes>
+		<attribute name="maxSize" type="integer">200</attribute>
+	</attributes>
+
+	<design-solutions>
+		<design-solution name="quickSort">
+			<attributes>
+				<attribute name="status" type="string">verified</attribute>
+				<attribute name="avgSpeed" type="integer">300</attribute>
+				<attribute name="outputOrdered" type="boolean">true</attribute>
+			</attributes>
+			<roles>
+				<role type="provided" name="sorter">
+					<pre />
+					<post></post>
+					<inv />
+				</role>
+			</roles>
+		</design-solution>
+
+		<design-solution name="mergeSort">
+			<attributes>
+				<attribute name="status" type="string">verified</attribute>
+				<attribute name="avgSpeed" type="integer">600</attribute>
+				<attribute name="outputOrdered" type="boolean">true</attribute>
+			</attributes>
+			<roles>
+				<role type="provided" name="sorter">
+					<pre />
+					<post></post>
+					<inv />
+				</role>
+			</roles>
+		</design-solution>
+
+		<design-solution name="binarySearch">
+			<attributes>
+				<attribute name="status" type="string">verified</attribute>
+			</attributes>
+			<roles>
+				<role type="consumed" name="sorter">
+					<pre>(^runningTime &lt; 200) &amp;&amp; (^ouputOrdered == true)</pre>
+					<post />
+					<inv />
+				</role>
+				<role type="provided" name="searcher">
+					<pre></pre>
+					<post></post>
+					<inv />
+				</role>
+			</roles>
+		</design-solution>
+	</design-solutions>
+
+	
+	<bindings>
+		<binding provider="quickSort" consumer="binarySearch" role="sorter" />
+	</bindings>
+
+
+	<constraints>
+		<constraint label="all verified">
+			FORALL ds1:DS,ds2:DS,a:AttrDS { IsString(a) &amp;&amp; NameOf(a, "status") =&gt; a == "verified" }
+		</constraint>
+	</constraints>
+</request>
