@@ -8,7 +8,7 @@ import java.util.*;
 
 
 public class XMLParser {
-	public class Signature {
+	private class Signature {
 		public List<String> params;
 		public String output;
 		public String label;
@@ -30,7 +30,8 @@ public class XMLParser {
 			return s;
 		}
 	}	
-	public class Conditions {
+
+	private class Conditions {
 		public String pre, post, inv;
 
 		public Conditions(String pre, String post, String inv) {
@@ -40,9 +41,6 @@ public class XMLParser {
 		}
 
 		public String replaceBind(String rep) {
-			// System.out.println(this.pre.length());// = pre;
-			// System.out.println(this.post.length());// = post;
-			// && (this.post == null || this.post.length() == 0) && (this.inv == null || this.inv.length() == 0)) {
 			String ret = "";
 			if (this.pre != null && this.pre.length() > 0) {
 				ret += this.pre + ";\n";
@@ -56,9 +54,6 @@ public class XMLParser {
 				ret += this.inv + ";\n";
 			}
 
-
-			
-			// System.out.println(ret+"---->"+rep);// = post;
 			return ret.replace("^", rep.replace("DS","AD")+".");
 		}
 
@@ -67,23 +62,49 @@ public class XMLParser {
 		}
 	}
 
+	public class NameWSource {
+		public String name;
+		public String source;
+		public int line;
+
+		public NameWSource(String name, String source, int line) {
+			this.name = name;
+			this.source = source;
+			this.line = line;
+
+			System.out.println("SOURCE: "+source);
+		}
+
+		public NameWSource(String name, String source) {
+			this(name, source, -1);
+		}
+
+        public boolean equals(Object o) {
+            if (o == null) return false;
+            if (o.getClass() != this.getClass()) return false;
+                
+            NameWSource f = (NameWSource)o;
+            return (f.name.toLowerCase().equals(this.name.toLowerCase()));
+        }
+	}
+
 	private Map<String, Set<String>> atoms = new HashMap<>();
 	private Map<String, List<String>> formulas = new HashMap<>();
 	private Map<String, List<Signature>> functions = new HashMap<>();
 	private Map<String, Conditions> ds_conditions = new HashMap<>();
 	private String file;
 
-	private String addAtom(String type, String name, String owner) { 
+	private String addAtom(String type, NameWSource nws, String owner) { 
         if (!atoms.containsKey(type)) atoms.put(type, new HashSet<String>());      
 
         if (owner == null) {
-        	name = type.trim().toUpperCase()+"."+name.trim().toLowerCase();
+        	nws.name = type.trim().toUpperCase()+"."+nws.name.trim().toLowerCase();
         } else {
-        	name = owner.replace("DS","AD") + "." + name.trim().toLowerCase();
+        	nws.name = owner.replace("DS","AD") + "." + nws.name.trim().toLowerCase();
         }
-		atoms.get(type).add(name); 
+		atoms.get(type).add(nws.name); 
 
-		return name;
+		return nws.name;
 	}
 
 	private String addFormula(String label, String f) { 
@@ -194,7 +215,7 @@ public class XMLParser {
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element e = (Element)nodes.item(i);
 			
-			String ds = addAtom("DS", e.getAttribute("name"), null);
+			String ds = addAtom("DS", new NameWSource(e.getAttribute("name"), element.toString()), null);
 			parseRoles(firstChild(e, "roles"), ds);
 			parseAttributes(firstChild(e, "attributes"), "AD", ds);
 
@@ -220,9 +241,9 @@ public class XMLParser {
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element e = (Element)nodes.item(i);
 			String label = "binding "+(e.hasAttribute("label") ? e.getAttribute("label") : i);
-			String c = addAtom("DS", e.getAttribute("consumer"), null);
-			String p = addAtom("DS", e.getAttribute("provider"), null);
-			String r = addAtom("R", e.getAttribute("role"), null);
+			String c = addAtom("DS",new NameWSource(e.getAttribute("consumer"), e.toString()), null);
+			String p = addAtom("DS",new NameWSource(e.getAttribute("provider"), e.toString()), null);
+			String r = addAtom("R", new NameWSource(e.getAttribute("role"), e.toString()), null);
 			String consumerConditionsKey = c+"-"+r;
 			String providerConditionsKey = p+"-"+r;
 
@@ -252,7 +273,7 @@ public class XMLParser {
 
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element attribute_element = (Element)nodes.item(i);
-			String a = addAtom(metatype, attribute_element.getAttribute("name"), owner);
+			String a = addAtom(metatype, new NameWSource(attribute_element.getAttribute("name"), element.toString()), owner);
 
 			// metatype
 			if (metatype != null) {
@@ -281,7 +302,7 @@ public class XMLParser {
 
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element role_element = (Element)nodes.item(i);
-			String r = addAtom("R", role_element.getAttribute("name"), null);
+			String r = addAtom("R", new NameWSource(role_element.getAttribute("name"), role_element.toString()), null);
 
 			if (ds != null && role_element.hasAttribute("type")) {
 				String type = role_element.getAttribute("type").toLowerCase().replace("consumed", "consumes").replace("provided", "provides");

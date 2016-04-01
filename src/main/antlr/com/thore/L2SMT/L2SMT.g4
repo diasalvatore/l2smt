@@ -259,7 +259,7 @@ grammar L2SMT;
 
         // strings unique val
         for (Map.Entry<String, String> entry : stringPool.entrySet()) {
-            out("(assert (! (and (= "+entry.getValue()+" "+i+") (= (valueOf "+entry.getValue()+") "+i+") ) :named _StringPool_"+i+"))\n");
+            out("(assert (! (and (= "+entry.getValue()+" "+i+") (= (valueOf "+entry.getValue()+") "+i+") ) :named StringPool_"+i+"))\n");
             i++;
         }
         

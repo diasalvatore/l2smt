@@ -4,7 +4,7 @@ import org.antlr.v4.runtime.*;
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
-import java.util.Scanner;
+import java.util.*;
 import org.apache.commons.cli.CommandLine;
 
 
@@ -30,6 +30,8 @@ public class L2SMTMain {
             }
 
             // XML -> L
+            String xml = new Scanner(new File(file)).useDelimiter("\\Z").next();
+
             String l_source;
             if (xmlParsing) {
                 XMLParser xmlParser = new XMLParser(file);
@@ -56,28 +58,32 @@ public class L2SMTMain {
                 }
             }
 
+
+            if (cmd.hasOption("d")) {
+                System.out.println("---------============ 0. XML ============---------");
+                printWithNumbers(xml.split("\n"));
+
+                System.out.println("\n\n\n---------============ 1. L ============---------");
+                printWithNumbers(l_source.split("\n"));
+
+                System.out.println("\n\n\n---------============ 2. SMT ============---------");
+                printWithNumbers(smt_source.split("\n"));
+            }            
+
             // execute
             if (cmd.hasOption("z3")) {
                 ProcessExecutor p = new ProcessExecutor("z3 -in");
-                Z3OutputParser z3_out = new Z3OutputParser(p.run(smt_source));
+                Z3OutputParser z3_out = new Z3OutputParser(Arrays.asList(smt_source.split("\n")), p.run(smt_source));
 
                 System.out.println(z3_out.toString());
             } 
-
-
-            if (cmd.hasOption("d")) {
-                System.out.println("---------============ FIRST STEP ============---------");
-                int i = 1;
-                for (String line : l_source.split("\n")) {
-                    System.out.println((i++)+": "+line);
-                } 
-                System.out.println("\n\n---------============ SECOND STEP ============---------");
-                
-                i = 1;
-                for (String line : smt_source.split("\n")) {
-                    System.out.println((i++)+": "+line);
-                } 
-            }            
         }
+    }
+
+    public static void printWithNumbers(String[] lines) {
+        int i = 1;
+        for (String line : lines) {
+            System.out.println((i++)+": "+line);
+        } 
     }
 }
