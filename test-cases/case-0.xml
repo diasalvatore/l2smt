@@ -61,7 +61,11 @@
 
 	<constraints>
 		<constraint label="all verified">
-			FORALL ds1:DS,ds2:DS,a:AttrDS { IsString(a) and NameOf(a, "status") implies a == "verified" }
+			FORALL ds1:DS,ds2:DS,a:AttrDS { 
+						IsString(a) and NameOf(a, "status") and Uses(ds1, ds2)
+							implies 
+								a == "megaverified" 
+					};
 		</constraint>
 	</constraints>
 </request>
