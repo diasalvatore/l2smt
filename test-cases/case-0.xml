@@ -56,6 +56,7 @@
 	
 	<bindings>
 		<binding provider="quickSort" consumer="binarySearch" role="sorter" />
+		<binding provider="mergeSort" consumer="binarySearch" role="sorter" />
 	</bindings>
 
 
@@ -64,8 +65,9 @@
 			FORALL ds1:DS,ds2:DS,a:AttrDS { 
 						IsString(a) and NameOf(a, "status") and Uses(ds1, ds2)
 							implies 
-								a == "megaverified" 
+								a == "verified" 
 					};
 		</constraint>
 	</constraints>
+
 </request>

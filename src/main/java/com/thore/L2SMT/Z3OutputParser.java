@@ -35,9 +35,9 @@ public class Z3OutputParser {
 		boolean sat = isSat();
 
 		if (sat) {
-			sb.append("SATISFABLE! ;)\n");
+			sb.append("SAT!\n");
 		} else {
-			sb.append("unsatisfable! :(\n");
+			sb.append("unsat! :(\n");
 			
 			String unsat_core = null;
 			if (output.size() > 1) unsat_core = output.get(1);
@@ -51,6 +51,8 @@ public class Z3OutputParser {
 					sb.append("\n"+i).append("   ").append(findLabel(labels[i]));
 				}
 			}
+
+			// System.out.println(output);
 		}
 
 		return sb.toString();

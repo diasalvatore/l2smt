@@ -72,7 +72,7 @@ public class XMLParser {
 			this.source = source;
 			this.line = line;
 
-			System.out.println("SOURCE: "+source);
+			// System.out.println("SOURCE: "+source);
 		}
 
 		public NameWSource(String name, String source) {
@@ -93,6 +93,7 @@ public class XMLParser {
 	private Map<String, List<Signature>> functions = new HashMap<>();
 	private Map<String, Conditions> ds_conditions = new HashMap<>();
 	private String file;
+	private boolean incremental_verification = false;
 
 	private String addAtom(String type, NameWSource nws, String owner) { 
         if (!atoms.containsKey(type)) atoms.put(type, new HashSet<String>());      
@@ -131,7 +132,7 @@ public class XMLParser {
 	}
 	
 
-	public String parse() throws Exception {
+	public LabeledSource parse() throws Exception {
 		DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
 		DocumentBuilder builder = null;
 
@@ -165,14 +166,21 @@ public class XMLParser {
 			}
 		}
 
+		return getLabeledSource();
+	}
+
+	public LabeledSource getLabeledSource() {
+		LabeledSource ls = new LabeledSource();
+
 		// ATOMS
-		o("[Atoms]");
+		LabeledSource.LabeledGroup lg = ls.new LabeledGroup("Atoms");
 		for (Map.Entry<String, Set<String>> e : atoms.entrySet()) {
 			String t = "Is"+transType(e.getKey())+"(";
-			o(t+    join(e.getValue(), ") && "+t)    +");");
+			lg.addLine(t+    join(e.getValue(), ") && "+t)    +");");
 		}
-
-		o("\n[System Status]");
+		ls.addUnorderedGroup(lg);
+		
+		lg = ls.new LabeledGroup("System Status");
 		for (Map.Entry<String, List<Signature>> f : functions.entrySet()) {
 			StringBuilder sb = new StringBuilder();
 			boolean first = true;
@@ -188,19 +196,25 @@ public class XMLParser {
 				sb.append(f.getKey()).append(s.toString());
 			}
 			sb.append(";");
-			o(sb.toString());
+			lg.addLine(sb.toString());
 		}
+		ls.addUnorderedGroup(lg);
 
 		for (Map.Entry<String, List<String>> f : formulas.entrySet()) {
-			o("\n["+f.getKey()+"]");
-			o(join(f.getValue(), ";\n") + ";");
+			lg = ls.new LabeledGroup(f.getKey());
+			lg.addLine(join(f.getValue(), ";\n") + ";");
+			
+			if (this.incremental_verification)
+				ls.addOrderedGroup(lg);
+			else
+				ls.addUnorderedGroup(lg);
 		}
 
 		// System.out.println(join(atoms, " && "));
 		// System.out.println(functions);
 		// System.out.println(__output.toString());
 
-		return __output.toString().replace("\n;\n","\n");
+		return ls;
 	}
 
 	private StringBuilder __output = new StringBuilder();
@@ -237,6 +251,7 @@ public class XMLParser {
 
 	private void parseBindings(Element element) {
 		NodeList nodes = element.getElementsByTagName("binding");
+		this.incremental_verification = (element.hasAttribute("incrementalVerification") && !element.getAttribute("incrementalVerification").toLowerCase().equals("false"));
 
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element e = (Element)nodes.item(i);
