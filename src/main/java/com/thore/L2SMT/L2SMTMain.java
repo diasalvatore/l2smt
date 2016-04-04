@@ -1,5 +1,6 @@
 package com.thore.L2SMT;
 
+import com.thore.input.*;
 import org.antlr.v4.runtime.*;
 import org.w3c.dom.*;
 import javax.xml.parsers.*;
@@ -10,6 +11,32 @@ import org.apache.commons.cli.CommandLine;
 
 public class L2SMTMain {
     public static void main(final String[] args) throws Exception {
+        LCommandLineParser clp = new LCommandLineParser();
+        CommandLine cmd = clp.parse(args);
+
+        for (String file : cmd.getArgList()) {
+            boolean xmlParsing = (  cmd.hasOption("xml") 
+                                    || (cmd.hasOption("f") && cmd.getOptionValue("f").toLowerCase().equals("xml"))
+                                    || file.toLowerCase().endsWith("xml")
+                                 );
+            boolean lParsing =   (  cmd.hasOption("l") 
+                                    || (cmd.hasOption("f") && cmd.getOptionValue("f").toLowerCase().equals("l"))
+                                    || file.toLowerCase().endsWith("l")
+                                 );
+
+            if (!xmlParsing && !lParsing) {
+                System.err.println("Cannot recognize input file format for: "+file+". Please specify --xml or --l or provide filename with extension");
+                System.exit(-1);
+            }
+
+            if (xmlParsing) { // XML -> L
+                Request request = XMLRequestParser.parseFile(file);
+                System.out.println(request.toL());
+            }
+        }
+    }
+
+    public static void main2(final String[] args) throws Exception {
         LCommandLineParser clp = new LCommandLineParser();
         CommandLine cmd = clp.parse(args);
 

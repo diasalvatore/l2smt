@@ -55,7 +55,7 @@
 
 	
 	<bindings>
-		<binding provider="quickSort" consumer="binarySearch" role="sorter" />
+		<binding label="test" provider="quickSort" consumer="binarySearch" role="sorter" />
 		<binding provider="mergeSort" consumer="binarySearch" role="sorter" />
 	</bindings>
 

@@ -5,7 +5,7 @@ import org.w3c.dom.*;
 import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
-
+import com.thore.language.*;
 
 public class XMLParser {
 	private class Signature {
@@ -228,7 +228,8 @@ public class XMLParser {
 
 		for (int i=0; i<nodes.getLength(); i++) {
 			Element e = (Element)nodes.item(i);
-			
+			DesignSolution _ds = new DesignSolution(e);
+			System.out.println(_ds.toString());
 			String ds = addAtom("DS", new NameWSource(e.getAttribute("name"), element.toString()), null);
 			parseRoles(firstChild(e, "roles"), ds);
 			parseAttributes(firstChild(e, "attributes"), "AD", ds);
