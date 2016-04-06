@@ -65,8 +65,8 @@ public class DesignSolution extends AbstractLElement {
         StringBuilder sb = new StringBuilder();
 
         for (Role r : roles) {
-            if (r.getPre() != null) sb.append("Precondition(").append(name).append(", (").append(r.getPre().getLContent()).append("))");
-            if (r.getPost() != null) sb.append("Precondition(").append(name).append(", (").append(r.getPost().getLContent()).append("))");
+            if (r.getPre() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(")");
+            if (r.getPost() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(")");
         }
 
         return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", false));

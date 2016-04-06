@@ -7,7 +7,7 @@
 		<design-solution name="quickSort">
 			<attributes>
 				<attribute name="status" type="string">verified</attribute>
-				<attribute name="avgSpeed" type="integer">300</attribute>
+				<attribute name="avgSpeed" type="integer">100</attribute>
 				<attribute name="outputOrdered" type="boolean">true</attribute>
 			</attributes>
 			<roles>
@@ -40,7 +40,7 @@
 			</attributes>
 			<roles>
 				<role type="consumed" name="sorter">
-					<pre>(^runningTime &lt; 200) and (^ouputOrdered == true)</pre>
+					<pre>(^avgSpeed &lt; 200) and (^ouputOrdered == true)</pre>
 					<post />
 					<inv />
 				</role>

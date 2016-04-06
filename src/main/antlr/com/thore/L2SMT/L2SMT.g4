@@ -5,6 +5,7 @@ grammar L2SMT;
 
     import java.util.*;
     import org.apache.commons.lang3.math.*;
+    import java.util.regex.*;
 }
 
 @parser::members {
@@ -12,7 +13,7 @@ grammar L2SMT;
         private String name;
         private int parameters;
 
-        private List<List<String>> tuples = new LinkedList<>();
+        private Set<List<String>> tuples = new HashSet<>();
 
         public Function(String name, int parameters) {
             this.name = name;
@@ -67,7 +68,8 @@ grammar L2SMT;
     }
 
     private enum Type { Bool, Int, Real, String, AttrDS, AttrE, Role, DS }
-    private String currentLabel;
+    private List<String> currentLabel;
+    private String currentLabelId;
     private int currentLabelCounter = 0;
     private Set<String> atoms = new HashSet<>();
     private Map<String, Type> tempType = new HashMap<>();
@@ -107,16 +109,27 @@ grammar L2SMT;
     * Returns current label
     */    
     private String getCurrentLabel() {
-        return currentLabel;
+        return currentLabel.toString();
     }
 
 
     /**
     * Set current label
     */    
-    private void setCurrentLabel(String label) {
-        currentLabel = label.substring(1,label.length()-1).replace(" ", "");
+    private void addLabel(String label) {
+        String l = label.substring(1,label.length()-1).replace(" ", "");
+        currentLabel.add(l);
+        if (currentLabelId.equals("") || l.startsWith("#")) currentLabelId = "id"+l.replace("#","").replaceAll("-","");
+    }
+
+
+    /**
+    * Reset current label
+    */    
+    private void resetLabel() {
+        currentLabel = new LinkedList<>();
         currentLabelCounter = 0;
+        currentLabelId = "";
     }
 
 
@@ -198,7 +211,8 @@ grammar L2SMT;
     * Add expression to evaluation set
     */
     private void addExpr(String expr) {
-        smt_expr.add((currentLabelCounter == 0 ? "\n; ["+currentLabel+"]\n":"")+"(assert (! "+expr+" :named "+currentLabel+"_"+(currentLabelCounter++)+"))");
+        if (expr != null && !expr.isEmpty())
+            smt_expr.add((currentLabelCounter == 0 ? "\n; ["+currentLabel+"]\n":"")+"(assert (! "+expr+" :named "+currentLabelId+"_"+(currentLabelCounter++)+"))");
     }
 
 
@@ -271,6 +285,9 @@ grammar L2SMT;
         for (String expr : smt_typeparam) 
             out("(assert (! "+expr+"  :named _P"+(i++)+"))\n");
 
+        // pre-post
+        out("\n\n"+getSMTConditions("pre"));
+        out("\n\n"+getSMTConditions("post"));
 
 
         // uninterpreted functions properties
@@ -365,6 +382,80 @@ grammar L2SMT;
             return " (valueOf " + s + " ) ";
         }
     }
+
+    private String clean(String s) {
+        return s.trim().replaceAll("\\ \\)", ")").replaceAll("\\)\\(", ") (").replaceAll("[\n\t\r]", " ").replaceAll(" +", " ");
+    }
+
+    private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
+    
+    private void updateCondition(String name, String ds, String role, String expr) {
+        Map<String[], String> map = null;
+        if (name.equals("pre")) {
+            map = pre;
+        } else if (name.equals("post")) {
+            map = post;
+        }
+
+        if (map != null) {
+            String[] key = new String[] { ds, role };
+
+            map.put(key, expr);
+        }
+    }
+
+    private String getSMTConditions(String name) {
+        String f = "";
+        Map<String[], String> map = null;
+        if (name.equals("pre")) {
+            map = pre;
+        } else if (name.equals("post")) {
+            map = post;
+        }
+
+        if (map != null) {
+            f = "(define-fun "+name+" ((owner Atom) (role Atom) (client Atom)) Bool (if %s))";
+
+            for (Map.Entry<String[], String> entry : map.entrySet()) {
+                String[] k = entry.getKey();
+                
+                String e = entry.getValue();
+                List<String> allMatches = new ArrayList<String>();
+                Matcher m = Pattern.compile("\\[(.*?)\\]").matcher(e);
+                while (m.find()) {
+                    allMatches.add(m.group(1));
+                }
+
+                StringBuilder sb = new StringBuilder();
+                sb.append("(exists (");
+                int i = 0;
+                for (String s : allMatches) sb.append("(a").append(i++).append(" Atom) ");
+                sb.append(") (and ");
+
+                i = 0;
+                for (String s : allMatches) {
+                    String aName = "a"+i;
+
+                    sb.append(" (isAttrDS ").append(aName).append(") ");
+                    sb.append(" (hasAttr client ").append(aName).append(")");
+                    sb.append(" (= (nameOf ").append(aName).append(") ").append(addStringPool(s)).append(")");
+                }
+                
+                i = 0;
+                for (String s : allMatches) {
+                    e = e.replaceAll("\\["+s+"\\]", "a"+(i++));
+                }
+                sb.append(" ").append(e).append("%s");
+
+                String smt = String.format("(and (= owner %s) (= role %s) %s)) ) true %s", k[0], k[1], String.format(sb.toString(), e), "(if %s)");
+                f = String.format(f, smt);
+            } 
+
+            f = String.format(f, "false false false");
+        }
+
+        return clean(f);
+    }
 }
 
 
@@ -385,7 +476,14 @@ grammar L2SMT;
 
 program returns [String s]:    
             { init(); }
-            (l=LABEL { setCurrentLabel($l.text); } (p=pred { addExpr($p.s); } EOP)+)+ { printSMT(); };
+            (
+                {resetLabel();}
+                (l=LABEL { addLabel($l.text); })+
+                (p=pred { addExpr($p.s); } EOP)+
+            )+ 
+            { printSMT(); };
+
+
 
 pred returns [String s, Type t]:
             op=('FORALL'|'EXISTS')                                   { $s = "("+($op.text.equals("FORALL") ? "forall" : "exists")+" ("; }
@@ -490,6 +588,12 @@ term returns [String s, Type t]:
     |       ID     { 
                       $t = null;
                       $s = $ID.text; 
+                      updateAtom($ID.text, null);
+                    }
+    |       '^'ID   { 
+                      $t = null;
+                      $s = "["+$ID.text+"]"; 
+                      updateAtom($ID.text, null);
                     }
     ;
 
@@ -570,19 +674,30 @@ function returns [String s, Type t]:
                                                   }
     |       'Bond(' t1=term ',' t2=term  ',' t3=term ')' { 
                                                     $t = Type.Bool;
-                                                    $s = "(= (bond "+$t1.text+" "+$t2.text+" "+$t3.text+") true)";
+                                                    //$s = "(= (bond "+$t1.text+" "+$t2.text+" "+$t3.text+") true)";
+                                                    $s = "(and (= (pre "+$t1.text+" "+$t2.text+" "+$t3.text+") true) (= (pre "+$t3.text+" "+$t2.text+" "+$t1.text+") true))";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.DS); 
                                                     updateAtom($t3.text, Type.Role); 
                                                     updateFunction("bond", Arrays.asList(new String[] { $t1.text, $t2.text, $t3.text })); 
                                                     updateFunction("uses", Arrays.asList(new String[] { $t1.text, $t2.text })); 
                                                   }
-    |       'Uses(' t1=term ',' t2=term  ')'           { 
+    |       'Uses(' t1=term ',' t2=term  ')'      { 
                                                     $t = Type.Bool;
                                                     $s = "(= (uses "+$t1.text+" "+$t2.text+") true)";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.DS); 
                                                     // updateFunction("uses", Arrays.asList(new String[] { $t1.text, $t2.text })); 
+                                                  }
+    |       'Precondition(' t1=term ','  r1=term ',' p1=pred  ')' { 
+                                                    $t = Type.Bool;
+                                                    $s = "";
+                                                    updateCondition("pre", $t1.text, $r1.text, $p1.s);
+                                                  }
+     |      'Postcondition(' t1=term ','  r1=term ',' p1=pred  ')' { 
+                                                    $t = Type.Bool;
+                                                    $s = "";
+                                                    updateCondition("post", $t1.text, $r1.text, $p1.s);
                                                   }
     ; 
            
@@ -610,14 +725,14 @@ ATTRDS:     'AD.' ID '.' ID;
 ROLE:       'R.' ID;
 DS:         'DS.' ID;
 VAR:        '$' ID;
-LABEL:      '[' ALLCHAR+ ']';
+LABEL:      '[' '#'? ALLCHAR+ ']';
 
 
 ID:         [a-z] [a-zA-Z0-9]*;
 
 
 fragment 
-ALLCHAR:    [a-zA-Z0-9 ];       
+ALLCHAR:    [a-zA-Z0-9\- ];       
 
 DIGIT:      [0-9]+ ;             
 WS:         [ \n\r\t]+ -> skip ; // skip spaces, tabs, newlines, \r (Windows)

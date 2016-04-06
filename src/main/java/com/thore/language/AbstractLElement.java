@@ -31,7 +31,7 @@ public abstract class AbstractLElement implements Comparable<AbstractLElement> {
 
         try {
             Transformer transformer = TransformerFactory.newInstance().newTransformer();
-            transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+            // transformer.setOutputProperty(OutputKeys.INDENT, "yes");
 
             StreamResult result = new StreamResult(new StringWriter());
             DOMSource source = new DOMSource((Node)element);
@@ -103,7 +103,8 @@ public abstract class AbstractLElement implements Comparable<AbstractLElement> {
             sb.append("[").append(label).append("]\n");
         }
 
-        sb.append("[#").append(_UUID.toString()).append("]\n");
+        sb.append("//"+this.toXML().replaceAll("\n\t",""));
+        sb.append("[#").append(_UUID.toString().replaceAll("-","")).append("]\n");
         sb.append(content).append("\n\n");
         return sb.toString();
     }

@@ -11,6 +11,10 @@ public class Z3OutputParser {
 		this.output = output;
 	}
 
+	public String raw() {
+		return output.toString();
+	}
+
 	public boolean isSat() {
 		if (output.size() < 1) return false;
 
