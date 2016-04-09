@@ -39,7 +39,13 @@ public class L2SMTMain {
             // L -> SMT
             for (int i=0; i<l_sources.length; i++) {
                 String l_source = l_sources[i];
-                System.out.println(l_source);
+
+
+                if (cmd.hasOption("d")) {
+                    System.out.println("\n\n\n---------============ "+i+".1 L ============---------");
+                    printWithNumbers(l_source.split("\n"));
+                }
+                
                 L2SMTLexer lexer = new L2SMTLexer(new ANTLRInputStream(l_source));
                 L2SMTParser l2smt_parser = new L2SMTParser(new CommonTokenStream(lexer));
                 l2smt_parser.program(); // root production

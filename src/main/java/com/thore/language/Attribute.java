@@ -30,6 +30,10 @@ public class Attribute extends AbstractLElement {
     }
 
     public String getLContent() {
-        return "";
+        return this.name + " == " + this.value + ";";
+    }
+
+    public String getValue() {
+        return value;
     }
 }

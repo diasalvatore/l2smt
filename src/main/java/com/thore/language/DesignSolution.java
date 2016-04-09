@@ -45,16 +45,18 @@ public class DesignSolution extends AbstractLElement {
         StringBuilder sb_mine = new StringBuilder();
         StringBuilder sb = new StringBuilder();
         
-        sb_mine.append("IsDS("+name+")");
+        sb_mine.append("IsDS("+name+");\n");
 
         for (Role r : roles) {
-            sb_mine.append(" && ").append(r.getType()).append("(").append(name).append(", ").append(r.getName()).append(")");
+            sb_mine.append(r.getType()).append("(").append(name).append(", ").append(r.getName()).append(");\n");
             sb.append(r.getLPreamble());
         }
 
         for (Attribute a : attributes) {
-            sb_mine.append(" && IsAttrDS(").append(a.getName()).append(")");
-            sb_mine.append(" && HasAttr(").append(name).append(", ").append(a.getName()).append(")");
+            String aName = "AD."+name+"."+a.getName();
+            sb_mine.append("IsAttrDS(").append(aName).append(");\n");
+            sb_mine.append("HasAttr(").append(name).append(", ").append(aName).append(");\n");
+            sb_mine.append(aName).append(" == ").append(a.getValue()).append(";\n");
             sb.append(a.getLPreamble());
         }
 
@@ -65,8 +67,8 @@ public class DesignSolution extends AbstractLElement {
         StringBuilder sb = new StringBuilder();
 
         for (Role r : roles) {
-            if (r.getPre() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(")");
-            if (r.getPost() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(")");
+            if (r.getPre() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
+            if (r.getPost() != null) sb.append("Postcondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
         }
 
         return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", false));

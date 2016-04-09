@@ -1,6 +1,6 @@
 <request>
 	<attributes>
-		<attribute name="maxSize" type="integer">200</attribute>
+		<attribute name="maxSize" type="integer">500</attribute>
 	</attributes>
 
 	<design-solutions>
@@ -12,9 +12,8 @@
 			</attributes>
 			<roles>
 				<role type="provided" name="sorter">
-					<pre />
+					<pre>maxSize &lt;= 500</pre>
 					<post></post>
-					<inv />
 				</role>
 			</roles>
 		</design-solution>
@@ -22,14 +21,13 @@
 		<design-solution name="mergeSort">
 			<attributes>
 				<attribute name="status" type="string">verified</attribute>
-				<attribute name="avgSpeed" type="integer">600</attribute>
+				<attribute name="avgSpeed" type="integer">201</attribute>
 				<attribute name="outputOrdered" type="boolean">true</attribute>
 			</attributes>
 			<roles>
 				<role type="provided" name="sorter">
-					<pre />
+					<pre>maxSize &lt;= 500</pre>
 					<post></post>
-					<inv />
 				</role>
 			</roles>
 		</design-solution>
@@ -40,14 +38,12 @@
 			</attributes>
 			<roles>
 				<role type="consumed" name="sorter">
-					<pre>(^avgSpeed &lt; 200) and (^ouputOrdered == true)</pre>
-					<post />
-					<inv />
+					<pre>(^avgSpeed &lt; 200) and (^outputOrdered == true)</pre>
+					<post></post>
 				</role>
 				<role type="provided" name="searcher">
 					<pre></pre>
 					<post></post>
-					<inv />
 				</role>
 			</roles>
 		</design-solution>
@@ -55,7 +51,7 @@
 
 	
 	<bindings>
-		<binding label="test" provider="quickSort" consumer="binarySearch" role="sorter" />
+		<binding provider="quickSort" consumer="binarySearch" role="sorter" />
 		<binding provider="mergeSort" consumer="binarySearch" role="sorter" />
 	</bindings>
 

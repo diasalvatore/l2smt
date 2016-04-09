@@ -162,11 +162,13 @@ grammar L2SMT;
     * Adds Atom name and its type to pools
     */
     private void updateAtom(String name, Type type) {
-        atoms.add(name);
+        if (!tempType.containsKey(name)) { // excluding quantified variables
+            atoms.add(name);
 
-        if (type != null) {
-            updateFunction("is"+type.toString(), Arrays.asList(new String[] { name }));
-        }
+            if (type != null) {
+                updateFunction("is"+type.toString(), Arrays.asList(new String[] { name }));
+            }
+        } 
     }
 
 
@@ -333,7 +335,8 @@ grammar L2SMT;
     private String addQuantifierType(String var, Type t) {
         if (t == Type.AttrDS || t == Type.AttrE || t == Type.DS || t == Type.Role) {
             tempType.put(var, t);
-
+            // System.out.println("var:"+var);
+            // System.out.println(tempType.entrySet());
             return "("+var+" Atom) ";          
         } else {
             return "("+var+" "+t+") ";          
@@ -414,7 +417,7 @@ grammar L2SMT;
         }
 
         if (map != null) {
-            f = "(define-fun "+name+" ((owner Atom) (role Atom) (client Atom)) Bool (if %s))";
+            f = "(define-fun "+name+" ((owner Atom) (client Atom) (role Atom)) Bool \n  (if %s) \n)";
 
             for (Map.Entry<String[], String> entry : map.entrySet()) {
                 String[] k = entry.getKey();
@@ -426,35 +429,42 @@ grammar L2SMT;
                     allMatches.add(m.group(1));
                 }
 
-                StringBuilder sb = new StringBuilder();
-                sb.append("(exists (");
-                int i = 0;
-                for (String s : allMatches) sb.append("(a").append(i++).append(" Atom) ");
-                sb.append(") (and ");
+                if (allMatches.size() == 0) {
+                    String smt = String.format("\n  (and (= owner %s) (= role %s))\n    (if %s true false) %s", k[0], k[1], e, "(if %s)");
+                    f = String.format(f, smt);
+                }  else {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("(exists (");
+                    int i = 0;
+                    for (String s : allMatches) sb.append("(a").append(i++).append(" Atom) ");
+                    sb.append(") (and ");
 
-                i = 0;
-                for (String s : allMatches) {
-                    String aName = "a"+i;
+                    i = 0;
+                    for (String s : allMatches) {
+                        String aName = "a"+i;
 
-                    sb.append(" (isAttrDS ").append(aName).append(") ");
-                    sb.append(" (hasAttr client ").append(aName).append(")");
-                    sb.append(" (= (nameOf ").append(aName).append(") ").append(addStringPool(s)).append(")");
+                        sb.append(" (isAttrDS ").append(aName).append(") ");
+                        sb.append(" (hasAttr client ").append(aName).append(")");
+                        sb.append(" (= (nameOf ").append(aName).append(") ").append(addStringPool(s)).append(")");
+
+                        i++;
+                    }
+                    
+                    i = 0;
+                    for (String s : allMatches) {
+                        e = e.replaceAll("\\["+s+"\\]", "a"+(i++));
+                    }
+                    sb.append(" ").append(e).append("%s))");
+
+                    String smt = String.format("\n  (and (= owner %s) (= role %s))\n    (if %s true false) %s", k[0], k[1], String.format(sb.toString(), e), "(if %s)");
+                    f = String.format(f, smt);
                 }
-                
-                i = 0;
-                for (String s : allMatches) {
-                    e = e.replaceAll("\\["+s+"\\]", "a"+(i++));
-                }
-                sb.append(" ").append(e).append("%s");
-
-                String smt = String.format("(and (= owner %s) (= role %s) %s)) ) true %s", k[0], k[1], String.format(sb.toString(), e), "(if %s)");
-                f = String.format(f, smt);
             } 
 
-            f = String.format(f, "false false false");
+            f = String.format(f, "true true true");
         }
 
-        return clean(f);
+        return f;
     }
 }
 
@@ -479,7 +489,7 @@ program returns [String s]:
             (
                 {resetLabel();}
                 (l=LABEL { addLabel($l.text); })+
-                (p=pred { addExpr($p.s); } EOP)+
+                ((p=pred { addExpr($p.s); })? EOP)+
             )+ 
             { printSMT(); };
 
@@ -675,7 +685,7 @@ function returns [String s, Type t]:
     |       'Bond(' t1=term ',' t2=term  ',' t3=term ')' { 
                                                     $t = Type.Bool;
                                                     //$s = "(= (bond "+$t1.text+" "+$t2.text+" "+$t3.text+") true)";
-                                                    $s = "(and (= (pre "+$t1.text+" "+$t2.text+" "+$t3.text+") true) (= (pre "+$t3.text+" "+$t2.text+" "+$t1.text+") true))";
+                                                    $s = "(and (= (pre "+$t1.text+" "+$t2.text+" "+$t3.text+") true) (= (pre "+$t2.text+" "+$t1.text+" "+$t3.text+") true))";
                                                     updateAtom($t1.text, Type.DS); 
                                                     updateAtom($t2.text, Type.DS); 
                                                     updateAtom($t3.text, Type.Role); 

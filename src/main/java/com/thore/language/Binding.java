@@ -23,12 +23,12 @@ public class Binding extends AbstractLElement {
 	public String getLContent() {
         StringBuilder sb = new StringBuilder();
         
-        sb.append("IsDS("+consumer+") && ")
-          .append("IsDS("+provider+") && ")
-          .append("IsRole("+role+") && ")
-          .append("Consumes("+consumer+", "+role+") && ")
-          .append("Provides("+provider+", "+role+") && ")
-          .append("Bond("+consumer+", "+provider+", "+role+");");
+        sb.append("IsDS("+consumer+");\n ")
+          .append("IsDS("+provider+");\n ")
+          .append("IsRole("+role+");\n ")
+          .append("Consumes("+consumer+", "+role+");\n ")
+          .append("Provides("+provider+", "+role+");\n ")
+          .append("Bond("+consumer+", "+provider+", "+role+");\n");
 
         return decorateL(sb.toString(), true);
 	}
