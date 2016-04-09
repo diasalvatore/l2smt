@@ -43,7 +43,7 @@ public abstract class AbstractLElement implements Comparable<AbstractLElement> {
             System.err.println(ex); // ToDo
         }
 
-        return xmlString;
+        return xmlString.replace("<?xml version=\"1.0\" encoding=\"UTF-8\"?>", "");
     }
 
     
