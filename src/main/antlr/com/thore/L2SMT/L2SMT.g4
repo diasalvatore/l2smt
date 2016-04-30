@@ -148,7 +148,7 @@ grammar L2SMT;
         Function f = null;
 
         for (String s : nple) {
-            if (!tempType.containsKey(s)) { // excluding quantified variables
+            if (tempType.containsKey(s)) { // excluding quantified variables
                 return;
             }
         }
