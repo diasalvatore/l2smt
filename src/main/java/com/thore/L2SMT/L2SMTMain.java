@@ -82,7 +82,7 @@ public class L2SMTMain {
                     Z3OutputParser z3_out = new Z3OutputParser(Arrays.asList(smt_source.split("\n")), p.run(smt_source));
 
                     // printWithNumbers(smt_source.split("\n"));
-                    System.out.println(z3_out.raw());
+                    if (cmd.hasOption("d")) System.out.println(z3_out.raw());
                     System.out.println(z3_out.toString());
                     
                     if (!z3_out.isSat() && !cmd.hasOption("i")) {
