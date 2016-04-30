@@ -1,10 +1,26 @@
 package com.thore.L2SMT;
 
 import java.util.*;
+import java.util.regex.*;
+import org.apache.commons.lang3.math.*;
+
 
 
 public class Z3OutputParser {
 	private List<String> input, output;
+
+	private int toInt(String s) {
+		StringBuffer snum = new StringBuffer();
+
+		for (int i = 0; i < s.length(); i++) {
+		   char c = s.charAt(i);
+		   if (Character.isDigit(c)) {
+		   	  snum.append(c);
+		   }
+		}
+
+		return NumberUtils.toInt(snum.toString());
+	}
 
 	public Z3OutputParser(List<String> input, List<String> output) {
 		this.input = input;
@@ -40,6 +56,35 @@ public class Z3OutputParser {
 
 		if (sat) {
 			sb.append("SAT!\n");
+			String sat_model = null;
+
+            List<String> allMatches = new ArrayList<String>();
+            List<String> responses = new ArrayList<String>();
+            Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(input.toString());
+            while (m.find()) {
+                allMatches.add(m.group(1));
+            }
+	
+			for (int i=2; i<output.size(); i++) {
+				String o = output.get(i);
+				for (int j=0; j<allMatches.size(); j++) {
+					String u = allMatches.get(j);
+					if (o.indexOf("(define-fun "+u, 0) != -1) {
+						i++;
+						int id = toInt(output.get(i));
+
+						m = Pattern.compile("\\(assert \\(= ([a-zA-Z]+) "+id+"\\)\\)").matcher(input.toString());
+						if (m.find()) {
+							System.out.println(u+": "+m.group(1));
+						}
+					}
+				}
+			}		
+
+
+
+			// System.out.println(allMatches); 
+
 		} else {
 			sb.append("unsat! :(\n");
 			

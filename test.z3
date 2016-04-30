@@ -65,10 +65,7 @@
    (and (= p0 quickSort) (= p1 AD.quickSort.outputOrdered))
    (and (= p0 mergeSort) (= p1 AD.mergeSort.status))
   ) true false))
-(define-fun bond ((p0 Atom) (p1 Atom) (p2 Atom) ) Bool  (if (or 
-   (and (= p0 binarySearch) (= p1 mergeSort) (= p2 sorter))
-   (and (= p0 binarySearch) (= p1 quickSort) (= p2 sorter))
-  ) true false))
+(define-fun bond ((p0 Atom) (p1 Atom) ) Bool false)
 (define-fun isBool ((p0 Atom) ) Bool  (if (or 
    (= p0 outputOrdered)
   ) true false))
@@ -85,10 +82,7 @@
    (= p0 status)
   ) true false))
 (define-fun hasRole ((p0 Atom) (p1 Atom) ) Bool false)
-(define-fun uses ((p0 Atom) (p1 Atom) ) Bool  (if (or 
-   (and (= p0 binarySearch) (= p1 mergeSort))
-   (and (= p0 binarySearch) (= p1 quickSort))
-  ) true false))
+(define-fun uses ((p0 Atom) (p1 Atom) ) Bool false)
 (define-fun isAttrE ((p0 Atom) ) Bool false)
 (define-fun consumes ((p0 Atom) (p1 Atom) ) Bool  (if (or 
    (and (= p0 binarySearch) (= p1 sorter))
@@ -148,12 +142,12 @@
 
 (define-fun pre ((owner Atom) (client Atom) (role Atom)) Bool 
   (if 
-  (and (= owner quickSort) (= role sorter))
-    (if (< (valueOf maxSize )  500) true false) (if 
   (and (= owner binarySearch) (= role sorter))
     (if (exists ((a0 Atom) (a1 Atom) ) (and  (isAttrDS a0)  (hasAttr client a0) (= (nameOf a0) string5) (isAttrDS a1)  (hasAttr client a1) (= (nameOf a1) string3) (and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) ))(and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) )))) true false) (if 
   (and (= owner mergeSort) (= role sorter))
-    (if (< (valueOf maxSize )  500) true false) (if true true true)))) 
+    (if (<= (valueOf maxSize )  500) true false) (if 
+  (and (= owner quickSort) (= role sorter))
+    (if (<= (valueOf maxSize )  500) true false) (if true true true)))) 
 )
 
 (define-fun post ((owner Atom) (client Atom) (role Atom)) Bool 
@@ -195,7 +189,7 @@
 (assert (! (= (valueOf AD.mergeSort.status )   (valueOf verified ) ) :named idPreamble_20))
 (assert (! (= (isAttrDS AD.mergeSort.avgSpeed) true) :named idPreamble_21))
 (assert (! (= (hasAttr mergeSort AD.mergeSort.avgSpeed) true) :named idPreamble_22))
-(assert (! (= (valueOf AD.mergeSort.avgSpeed )  50) :named idPreamble_23))
+(assert (! (= (valueOf AD.mergeSort.avgSpeed )  201) :named idPreamble_23))
 (assert (! (= (isAttrDS AD.mergeSort.outputOrdered) true) :named idPreamble_24))
 (assert (! (= (hasAttr mergeSort AD.mergeSort.outputOrdered) true) :named idPreamble_25))
 (assert (! (= (valueOf AD.mergeSort.outputOrdered )   (valueOf string0 ) ) :named idPreamble_26))
@@ -212,21 +206,14 @@
 (assert (! (= (isRole sorter) true) :named idPreamble_37))
 (assert (! (= (isRole searcher) true) :named idPreamble_38))
 (assert (! (= (isString status) true) :named idPreamble_39))
-(assert (! (= (valueOf maxSize )  600) :named idPreamble_40))
+(assert (! (= (valueOf maxSize )  500) :named idPreamble_40))
 (assert (! (= (isDS binarySearch) true) :named idPreamble_41))
-(assert (! (= (isDS quickSort) true) :named idPreamble_42))
-(assert (! (= (isRole sorter) true) :named idPreamble_43))
-(assert (! (= (consumes binarySearch sorter) true) :named idPreamble_44))
-(assert (! (= (provides quickSort sorter) true) :named idPreamble_45))
-(assert (! (and (= (pre binarySearch quickSort sorter) true) (= (pre quickSort binarySearch sorter) true)) :named idPreamble_46))
-(assert (! (= (isDS binarySearch) true) :named idPreamble_47))
-(assert (! (= (isDS mergeSort) true) :named idPreamble_48))
-(assert (! (= (isRole sorter) true) :named idPreamble_49))
-(assert (! (= (consumes binarySearch sorter) true) :named idPreamble_50))
-(assert (! (= (provides mergeSort sorter) true) :named idPreamble_51))
-(assert (! (and (= (pre binarySearch mergeSort sorter) true) (= (pre mergeSort binarySearch sorter) true)) :named idPreamble_52))
-(assert (! (forall ((ds1 Atom) (ds2 Atom) (a Atom) ) (=> (and (= (isAttrDS a) true) (= (isDS ds2) true) (= (isDS ds1) true) ) (=> (and (and (= (isString a) true) (= (nameOf a) string1)) (= (uses ds1 ds2) true)) (= (valueOf a )   (valueOf string2 ) )))) :named idPreamble_53))
+(assert (! (= (isRole sorter) true) :named idPreamble_42))
+(assert (! (= (consumes binarySearch sorter) true) :named idPreamble_43))
+(assert (! (exists ((p Atom) ) (and (= (isDS p) true)  (pre binarySearch p sorter))) :named idPreamble_44))
+(assert (! (forall ((ds1 Atom) (ds2 Atom) (a Atom) ) (=> (and (= (isAttrDS a) true) (= (isDS ds2) true) (= (isDS ds1) true) ) (=> (and (and (= (isString a) true) (= (nameOf a) string1)) (= (uses ds1 ds2) true)) (= (valueOf a )   (valueOf string2 ) )))) :named idPreamble_45))
 
 
 (check-sat)
 (get-unsat-core)
+(get-model)

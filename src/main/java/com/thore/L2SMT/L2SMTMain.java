@@ -81,7 +81,7 @@ public class L2SMTMain {
                     ProcessExecutor p = new ProcessExecutor("z3 -in");
                     Z3OutputParser z3_out = new Z3OutputParser(Arrays.asList(smt_source.split("\n")), p.run(smt_source));
 
-                    printWithNumbers(smt_source.split("\n"));
+                    // printWithNumbers(smt_source.split("\n"));
                     System.out.println(z3_out.raw());
                     System.out.println(z3_out.toString());
                     

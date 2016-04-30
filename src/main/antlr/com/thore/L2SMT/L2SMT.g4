@@ -147,6 +147,12 @@ grammar L2SMT;
     private void updateFunction(String name, List<String> nple) {
         Function f = null;
 
+        for (String s : nple) {
+            if (!tempType.containsKey(s)) { // excluding quantified variables
+                return;
+            }
+        }
+
         if (!functions.containsKey(name)) {
             f = new Function(name, 0);
             functions.put(name, f);
@@ -324,6 +330,7 @@ grammar L2SMT;
 
         out("\n\n(check-sat)\n");
         out("(get-unsat-core)\n");
+        out("(get-model)\n");
         // System.out.println("(get-model)");
         // System.out.println(owning);
     }
@@ -379,7 +386,7 @@ grammar L2SMT;
     * Translate values using valueOf or not
     */
     private String valueOfOrNot(String s) {
-        if (NumberUtils.isNumber(s)) { // ToDo: consider other cases than numbers
+        if (NumberUtils.isNumber(s) || s.equals("true")  || s.equals("false") ) { // ToDo: consider other cases than numbers
             return s;
         } else {
             return " (valueOf " + s + " ) ";
@@ -500,8 +507,13 @@ pred returns [String s, Type t]:
             v=ID ':' ty=TYPE                                         { $s += addQuantifierType($v.text, Type.valueOf($ty.text)); }
             (',' v=ID ':' ty=TYPE                                    { $s += addQuantifierType($v.text, Type.valueOf($ty.text)); })* 
             '{' p=pred '}'                                           {
-                                                                       $t = cType($p.t, Type.Bool, $op.text + " predicate should be Bool"); 
-                                                                       $s += ") (=> "+getQuantifierTypes()+" "+$p.s+"))"; 
+                                                                       // $t = cType($p.t, Type.Bool, $op.text + " predicate should be Bool"); 
+                                                                       $t = Type.Bool; 
+                                                                       if ($op.text.equals("FORALL")) {
+                                                                          $s += ") (=> "+getQuantifierTypes()+" "+$p.s+"))"; 
+                                                                       } else {
+                                                                          $s += ") (and "+getQuantifierTypes()+" "+$p.s+"))"; 
+                                                                       }
                                                                      }
     |       p1=pred op=(AND|OR) p2=pred                              {
                                                                        //cType($p1.t, Type.Bool, $op.text + " operands should be Bool");
@@ -701,8 +713,12 @@ function returns [String s, Type t]:
                                                   }
     |       'Precondition(' t1=term ','  r1=term ',' p1=pred  ')' { 
                                                     $t = Type.Bool;
-                                                    $s = "";
-                                                    updateCondition("pre", $t1.text, $r1.text, $p1.s);
+                                                    if (tempType.size() > 0) {
+                                                        $s = "(pre "+$t1.text+" "+$r1.text+" "+$p1.s+")";
+                                                    } else {
+                                                        $s = "";
+                                                        updateCondition("pre", $t1.text, $r1.text, $p1.s);
+                                                    }
                                                   }
      |      'Postcondition(' t1=term ','  r1=term ',' p1=pred  ')' { 
                                                     $t = Type.Bool;
