@@ -49,7 +49,7 @@ public class L2SMTMain {
                 L2SMTLexer lexer = new L2SMTLexer(new ANTLRInputStream(l_source));
                 L2SMTParser l2smt_parser = new L2SMTParser(new CommonTokenStream(lexer));
                 l2smt_parser.program(); // root production
-                String smt_source = l2smt_parser.getSMT();
+                String smt_source = l2smt_parser.getSystemState().getSMT();
 
                 // output
                 if (!cmd.hasOption("q")) {
@@ -142,7 +142,7 @@ public class L2SMTMain {
                 L2SMTLexer lexer = new L2SMTLexer(new ANTLRInputStream(l_source));
                 L2SMTParser l2smt_parser = new L2SMTParser(new CommonTokenStream(lexer));
                 l2smt_parser.program(); // root production
-                String smt_source = l2smt_parser.getSMT();
+                String smt_source = l2smt_parser.getSystemState().getSMT();
 
                 // output
                 if (!cmd.hasOption("q")) {
