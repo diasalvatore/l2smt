@@ -7,7 +7,7 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.*;
 
-public class Function {
+public class Function implements Cloneable {
     private String name;
     private int parameters;
 
@@ -15,6 +15,22 @@ public class Function {
 
     public String getName() {
         return name;
+    }
+
+    public Function clone() {
+        Function cloned = new Function(name, parameters);
+
+
+        for (List<String> t : tuples) {
+            List<String> cloned_list = new LinkedList<>();
+
+            for (String val : t) {
+                cloned_list.add(val);
+            }
+            cloned.tuples.add(cloned_list);
+        }
+
+        return cloned;
     }
     
     public Function(String name, int parameters) {

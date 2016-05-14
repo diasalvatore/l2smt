@@ -1,13 +1,15 @@
 package com.thore.output;
 
+import com.thore.language.*;
 import java.util.*;
 import java.util.regex.*;
 import org.apache.commons.lang3.math.*;
 
 
 
-public class Z3 {
+public class Z3 implements TheoremProver {
 	private List<String> input, output;
+	private ProcessExecutor p;
 
 	private int toInt(String s) {
 		StringBuffer snum = new StringBuffer();
@@ -22,14 +24,17 @@ public class Z3 {
 		return NumberUtils.toInt(snum.toString());
 	}
 
-	public Z3(String input) {
-		this.input = Arrays.asList(input.split("\n"));
-
-        ProcessExecutor p = new ProcessExecutor("z3 -in");
-		this.output = p.run(input);
+	public Z3() {
+        p = new ProcessExecutor("z3 -in");
 	}
 
-	public String raw() {
+	public void solve(SystemState s) { 
+		String smt = s.getSMT();
+		this.input  = Arrays.asList(smt.split("\n"));
+		this.output = p.run(smt);
+	}
+
+	public String getRawOutput() {
 		return output.toString();
 	}
 
@@ -50,6 +55,35 @@ public class Z3 {
 		return "";
 	}
 	
+	public Map<String, String> getResolved() {
+		String sat_model = null;
+		Map<String, String> resolved = new HashMap<>();
+        List<String> allMatches = new ArrayList<String>();
+        List<String> responses = new ArrayList<String>();
+        Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(input.toString());
+        while (m.find()) {
+            allMatches.add(m.group(1));
+        }
+
+		for (int i=2; i<output.size(); i++) {
+			String o = output.get(i);
+			for (int j=0; j<allMatches.size(); j++) {
+				String u = allMatches.get(j);
+				if (o.indexOf("(define-fun "+u, 0) != -1) {
+					i++;
+					int id = toInt(output.get(i));
+
+					m = Pattern.compile("\\(assert \\(= ([a-zA-Z]+) "+id+"\\)\\)").matcher(input.toString());
+					if (m.find()) {
+						resolved.put(u,m.group(1));
+					}
+				}
+			}
+		}	
+
+		return resolved;
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
@@ -58,34 +92,8 @@ public class Z3 {
 
 		if (sat) {
 			sb.append("SAT!\n");
-			String sat_model = null;
-
-            List<String> allMatches = new ArrayList<String>();
-            List<String> responses = new ArrayList<String>();
-            Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(input.toString());
-            while (m.find()) {
-                allMatches.add(m.group(1));
-            }
-	
-			for (int i=2; i<output.size(); i++) {
-				String o = output.get(i);
-				for (int j=0; j<allMatches.size(); j++) {
-					String u = allMatches.get(j);
-					if (o.indexOf("(define-fun "+u, 0) != -1) {
-						i++;
-						int id = toInt(output.get(i));
-
-						m = Pattern.compile("\\(assert \\(= ([a-zA-Z]+) "+id+"\\)\\)").matcher(input.toString());
-						if (m.find()) {
-							System.out.println(u+": "+m.group(1));
-						}
-					}
-				}
-			}		
-
-
-
-			// System.out.println(allMatches); 
+			Map<String, String> r = getResolved();
+			System.out.println(r.size()>0 ? r : "");
 
 		} else {
 			sb.append("unsat! :(\n");

@@ -16,6 +16,7 @@ import org.apache.logging.log4j.*;
 
 public class L2SMTMain {
     private Logger logger = LogManager.getFormatterLogger(L2SMTMain.class.getName());    
+    public static boolean DEBUG = false;
 
     public static void main(final String[] args) throws Exception {
         LCommandLineParser clp = new LCommandLineParser();
@@ -43,6 +44,7 @@ public class L2SMTMain {
                 LoggerConfig loggerConfig = config.getLoggerConfig(LogManager.ROOT_LOGGER_NAME); 
                 loggerConfig.setLevel(Level.DEBUG);
                 ctx.updateLoggers();
+                DEBUG = true;
             }
 
             // XML -> L
@@ -58,20 +60,21 @@ public class L2SMTMain {
                 L2SMTLexer lexer = new L2SMTLexer(new ANTLRInputStream(l_source));
                 L2SMTParser l2smt_parser = new L2SMTParser(new CommonTokenStream(lexer));
                 l2smt_parser.program(); // root production
-                SystemState ss = l2smt_parser.getSystemState();
+                List<SystemState> sss = l2smt_parser.getSystemStates();
 
-                for (int j=0; j<ss.getStepCount(); j++) {
+                // output
+                for (int j=0; j<sss.size(); j++) {
+                    SystemState ss = sss.get(j);
                     if (cmd.hasOption("dd")) {
                         System.out.println("\n\n\n---------============ "+i+"."+j+".1 L ============---------");
                         printWithNumbers(l_source.split("\n"));
                     }
                     
-                    String smt_source = ss.getSMT(j);
+                    String smt_source = ss.getSMT();
 
-                    // output
                     if (!cmd.hasOption("q")) {
                         if (cmd.hasOption("o")) {
-                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"") + (ss.getStepCount()>0?"-"+j:"");
+                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"") + (sss.size()>0?"-"+j:"");
 
                             PrintStream out;
                             if (j == 0) {
@@ -87,27 +90,15 @@ public class L2SMTMain {
                             }
                         }
                     }
+                }
 
+                // execution
+                if (cmd.hasOption("z3")) {
+                    SystemStateExecutor exec = new SystemStateExecutor(sss);
+                    TheoremProver z3 = new Z3();
+                    exec.setTheoremProver(z3);
 
-                    if (cmd.hasOption("dd")) {
-                        System.out.println("\n\n\n---------============ "+i+"."+j+".2 SMT ============---------");
-                        printWithNumbers(smt_source.split("\n"));
-                    }            
-
-                    // execute
-                    if (cmd.hasOption("z3")) {
-                        // System.out.println("Verifying set of constraints: { "+ls.getOrderedLabels(i) + "}");
-
-                        Z3 z3_out = new Z3(smt_source);
-
-                        // printWithNumbers(smt_source.split("\n"));
-                        if (cmd.hasOption("dd")) System.out.println(z3_out.raw());
-                        System.out.println(z3_out.toString());
-                        
-                        if (!z3_out.isSat() && !cmd.hasOption("i")) {
-                            System.exit(-1);
-                        }
-                    } 
+                    exec.solve();
                 }
 
             }

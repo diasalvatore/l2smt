@@ -14,12 +14,17 @@ grammar L2SMT;
     private String currentLabelId;
     private int currentLabelCounter = 0;
     private Map<String, Type> tempType = new HashMap<>();
-    private SystemState ss;
-    
-    public SystemState getSystemState() {
-        return ss;
+    private List<SystemState> sss = new ArrayList<>();
+    private SystemState ss = new SystemState();
+
+    public List<SystemState> getSystemStates() {
+        return sss;
     }
 
+    private void newState() {
+        sss.add(ss); 
+        ss = ss.clone();
+    }
 
     private void addLabel(String label) {
         String l = label.substring(1,label.length()-1).replace(" ", "");
@@ -144,10 +149,11 @@ program returns [String s]:
             { ss = new SystemState(); }
             (
                 {resetLabel();}
-                (STEP_DELIMITER { ss.newStep(); })?
+                (STEP_DELIMITER { newState(); })?
                 (l=LABEL { addLabel($l.text); })+
                 ((p=pred { addExpr($p.s); })? EOP)+
             )+ 
+            { newState(); }
     ;
 
 
