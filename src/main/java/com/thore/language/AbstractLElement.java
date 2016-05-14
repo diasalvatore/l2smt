@@ -6,8 +6,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.*;
+import org.apache.logging.log4j.*;
 
 public abstract class AbstractLElement implements Comparable<AbstractLElement> {
+    private Logger logger = LogManager.getFormatterLogger(getClass().getName());    
     protected final UUID _UUID;
     protected String id, label, name;
     protected int step = -1;
@@ -24,6 +26,8 @@ public abstract class AbstractLElement implements Comparable<AbstractLElement> {
         if (element.hasAttribute("step") && !element.getAttribute("step").toLowerCase().equals("")) {
             this.step = Integer.parseInt(element.getAttribute("step"));
         }
+
+        logger.debug("Creating Element: %s [%s](%s)", name, _UUID.toString(), getClass().getName() );
     }
 
     public String toXML() {
@@ -96,15 +100,15 @@ public abstract class AbstractLElement implements Comparable<AbstractLElement> {
         return this.step - e.step;
     }
 
-    public String decorateL(String content, boolean withLabel) {
+    public String decorateL(String content, String labelSuffix, boolean withLabel) {
         StringBuilder sb = new StringBuilder();
 
         if (withLabel && label != null && !label.equals("")) {
-            sb.append("[").append(label).append("]\n");
+            sb.append("[").append(label).append(labelSuffix).append("]\n");
         }
 
         // sb.append("//"+this.toXML().replaceAll("\n\t",""));
-        sb.append("[#").append(_UUID.toString().replaceAll("-","")).append("]\n");
+        sb.append("[#").append(_UUID.toString().replaceAll("-","")).append(labelSuffix).append("]\n");
         sb.append(content).append("\n\n");
         return sb.toString();
     }

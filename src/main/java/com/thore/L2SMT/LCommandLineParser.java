@@ -10,6 +10,7 @@ public class LCommandLineParser {
 
     public LCommandLineParser() {
         options.addOption("d", "debug", false, "Show debug informations");
+        options.addOption("dd", "extradebug", false, "Show translations");
         options.addOption("h", "help", false, "Prints this help");
         options.addOption("o", "output", true, "Writes output in specified files (default is stdout)");
         options.addOption("q", "quiet", false, "Don't show output (it should be used with -z3 or -x)");

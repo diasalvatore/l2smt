@@ -7,12 +7,15 @@ import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.*;
 import java.util.regex.*;
+import org.apache.logging.log4j.*;
 
 public class SystemState {
+    private Logger logger = LogManager.getFormatterLogger(getClass().getName());
     private Type[] mutual_exclusive =  { Type.Bool, Type.Int, Type.Real, Type.String, Type.Role, Type.DS };
     private Map<String, Function> functions;
     private Set<String> atoms = new HashSet<>();
     private List<String> smt_expr = new LinkedList<>();
+    private List<List<String>> group_smt_expr = new LinkedList<>();
     private List<String> smt_typeparam = new LinkedList<>();
     private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
     private Map<String, String> stringPool = new TreeMap<>();
@@ -138,18 +141,27 @@ public class SystemState {
     }
 
 
-    /**
-    * Add expression to evaluation set
-    */
+    public void newStep() {
+        group_smt_expr.add(smt_expr);
+        smt_expr = new LinkedList<>();
+    }
+
     public void addExpr(String expr) {
         if (expr != null && !expr.isEmpty())
             smt_expr.add(expr);
     }
 
-    public String getSMT() {
+    public int getStepCount() {
+        return group_smt_expr.size();
+    }
+
+    public String getSMT(int step) {
         StringBuilder output = new StringBuilder();
         String tmp;
         int i;
+
+        if (step > group_smt_expr.size() || step <= 0) { step = group_smt_expr.size(); }
+        if (smt_expr.size() > 0) newStep();
 
         // OPTIONS
         output.append("(set-option :produce-unsat-cores true)\n\n");
@@ -236,8 +248,13 @@ public class SystemState {
         //    "(assert (! (forall ((x Atom) (y Atom)) (=> (and (= (isDS x) true) (= (hasAttr x y) true)) (forall ((z Atom)) (=> (and (= (isDS z) true) (not (= x z))) (not (= (hasAttr z y) true)) )))) :named _UniqueHasAttr)) \n");
 
         output.append("\n\n; ---=== User Defined Assertions ===--- ");
-        for (String expr : smt_expr) {
-            output.append(expr+"\n");
+        for (int j=0; j<step; j++) {
+            List<String> expr_group = group_smt_expr.get(j);
+            output.append("\n; Step "+j+"\n");
+
+            for (String expr : expr_group) {
+                output.append(expr+"\n");
+            }
         }
 
         output.append("\n\n(check-sat)\n");

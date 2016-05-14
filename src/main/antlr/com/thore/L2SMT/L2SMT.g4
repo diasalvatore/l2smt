@@ -144,11 +144,11 @@ program returns [String s]:
             { ss = new SystemState(); }
             (
                 {resetLabel();}
+                (STEP_DELIMITER { ss.newStep(); })?
                 (l=LABEL { addLabel($l.text); })+
                 ((p=pred { addExpr($p.s); })? EOP)+
             )+ 
-            {  };
-
+    ;
 
 
 pred returns [String s, Type t]:
@@ -389,6 +389,7 @@ AND:        '&&' | 'and';
 OR:         '||' | 'or';
 NOT:        '!'  | 'not';
 IMPLIES:    '=>' | 'implies';
+STEP_DELIMITER: '$$$';
 
 // litterals
 BOOL:       'True' | 'False'| 'true' | 'false';

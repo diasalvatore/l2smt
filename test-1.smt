@@ -65,12 +65,15 @@
    (and (= p0 quickSort) (= p1 AD.quickSort.outputOrdered))
    (and (= p0 mergeSort) (= p1 AD.mergeSort.status))
   ) true false))
-(define-fun bond ((p0 Atom) (p1 Atom) ) Bool false)
+(define-fun bond ((p0 Atom) (p1 Atom) (p2 Atom) ) Bool  (if (or 
+   (and (= p0 binarySearch) (= p1 quickSort) (= p2 searcher))
+  ) true false))
 (define-fun isBool ((p0 Atom) ) Bool  (if (or 
    (= p0 outputOrdered)
   ) true false))
 (define-fun provides ((p0 Atom) (p1 Atom) ) Bool  (if (or 
    (and (= p0 quickSort) (= p1 sorter))
+   (and (= p0 quickSort) (= p1 searcher))
    (and (= p0 binarySearch) (= p1 searcher))
    (and (= p0 mergeSort) (= p1 sorter))
   ) true false))
@@ -82,9 +85,12 @@
    (= p0 status)
   ) true false))
 (define-fun hasRole ((p0 Atom) (p1 Atom) ) Bool false)
-(define-fun uses ((p0 Atom) (p1 Atom) ) Bool false)
+(define-fun uses ((p0 Atom) (p1 Atom) ) Bool  (if (or 
+   (and (= p0 binarySearch) (= p1 quickSort))
+  ) true false))
 (define-fun isAttrE ((p0 Atom) ) Bool false)
 (define-fun consumes ((p0 Atom) (p1 Atom) ) Bool  (if (or 
+   (and (= p0 binarySearch) (= p1 searcher))
    (and (= p0 binarySearch) (= p1 sorter))
   ) true false))
 
@@ -142,12 +148,12 @@
 
 (define-fun pre ((owner Atom) (client Atom) (role Atom)) Bool 
   (if 
-  (and (= owner binarySearch) (= role sorter))
-    (if (exists ((a0 Atom) (a1 Atom) ) (and  (isAttrDS a0)  (hasAttr client a0) (= (nameOf a0) string5) (isAttrDS a1)  (hasAttr client a1) (= (nameOf a1) string3) (and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) ))(and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) )))) true false) (if 
+  (and (= owner quickSort) (= role sorter))
+    (if (<= (valueOf maxSize )  500) true false) (if 
   (and (= owner mergeSort) (= role sorter))
     (if (<= (valueOf maxSize )  500) true false) (if 
-  (and (= owner quickSort) (= role sorter))
-    (if (<= (valueOf maxSize )  500) true false) (if true true true)))) 
+  (and (= owner binarySearch) (= role sorter))
+    (if (exists ((a0 Atom) (a1 Atom) ) (and  (isAttrDS a0)  (hasAttr client a0) (= (nameOf a0) string5) (isAttrDS a1)  (hasAttr client a1) (= (nameOf a1) string3) (and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) ))(and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) )))) true false) (if true true true)))) 
 )
 
 (define-fun post ((owner Atom) (client Atom) (role Atom)) Bool 
@@ -165,53 +171,81 @@
 
 
 ; ---=== User Defined Assertions ===--- 
-; [[Preamble]]
-(assert (! (= (isInt maxSize) true) :named idPreamble_0))
-(assert (! (= (isDS quickSort) true) :named idPreamble_1))
-(assert (! (= (provides quickSort sorter) true) :named idPreamble_2))
-(assert (! (= (isAttrDS AD.quickSort.status) true) :named idPreamble_3))
-(assert (! (= (hasAttr quickSort AD.quickSort.status) true) :named idPreamble_4))
-(assert (! (= (valueOf AD.quickSort.status )   (valueOf verified ) ) :named idPreamble_5))
-(assert (! (= (isAttrDS AD.quickSort.avgSpeed) true) :named idPreamble_6))
-(assert (! (= (hasAttr quickSort AD.quickSort.avgSpeed) true) :named idPreamble_7))
-(assert (! (= (valueOf AD.quickSort.avgSpeed )  100) :named idPreamble_8))
-(assert (! (= (isAttrDS AD.quickSort.outputOrdered) true) :named idPreamble_9))
-(assert (! (= (hasAttr quickSort AD.quickSort.outputOrdered) true) :named idPreamble_10))
-(assert (! (= (valueOf AD.quickSort.outputOrdered )   (valueOf string0 ) ) :named idPreamble_11))
-(assert (! (= (isRole sorter) true) :named idPreamble_12))
-(assert (! (= (isString status) true) :named idPreamble_13))
-(assert (! (= (isInt avgSpeed) true) :named idPreamble_14))
-(assert (! (= (isBool outputOrdered) true) :named idPreamble_15))
-(assert (! (= (isDS mergeSort) true) :named idPreamble_16))
-(assert (! (= (provides mergeSort sorter) true) :named idPreamble_17))
-(assert (! (= (isAttrDS AD.mergeSort.status) true) :named idPreamble_18))
-(assert (! (= (hasAttr mergeSort AD.mergeSort.status) true) :named idPreamble_19))
-(assert (! (= (valueOf AD.mergeSort.status )   (valueOf verified ) ) :named idPreamble_20))
-(assert (! (= (isAttrDS AD.mergeSort.avgSpeed) true) :named idPreamble_21))
-(assert (! (= (hasAttr mergeSort AD.mergeSort.avgSpeed) true) :named idPreamble_22))
-(assert (! (= (valueOf AD.mergeSort.avgSpeed )  201) :named idPreamble_23))
-(assert (! (= (isAttrDS AD.mergeSort.outputOrdered) true) :named idPreamble_24))
-(assert (! (= (hasAttr mergeSort AD.mergeSort.outputOrdered) true) :named idPreamble_25))
-(assert (! (= (valueOf AD.mergeSort.outputOrdered )   (valueOf string0 ) ) :named idPreamble_26))
-(assert (! (= (isRole sorter) true) :named idPreamble_27))
-(assert (! (= (isString status) true) :named idPreamble_28))
-(assert (! (= (isInt avgSpeed) true) :named idPreamble_29))
-(assert (! (= (isBool outputOrdered) true) :named idPreamble_30))
-(assert (! (= (isDS binarySearch) true) :named idPreamble_31))
-(assert (! (= (consumes binarySearch sorter) true) :named idPreamble_32))
-(assert (! (= (provides binarySearch searcher) true) :named idPreamble_33))
-(assert (! (= (isAttrDS AD.binarySearch.status) true) :named idPreamble_34))
-(assert (! (= (hasAttr binarySearch AD.binarySearch.status) true) :named idPreamble_35))
-(assert (! (= (valueOf AD.binarySearch.status )   (valueOf verified ) ) :named idPreamble_36))
-(assert (! (= (isRole sorter) true) :named idPreamble_37))
-(assert (! (= (isRole searcher) true) :named idPreamble_38))
-(assert (! (= (isString status) true) :named idPreamble_39))
-(assert (! (= (valueOf maxSize )  500) :named idPreamble_40))
-(assert (! (= (isDS binarySearch) true) :named idPreamble_41))
-(assert (! (= (isRole sorter) true) :named idPreamble_42))
-(assert (! (= (consumes binarySearch sorter) true) :named idPreamble_43))
-(assert (! (exists ((p Atom) ) (and (= (isDS p) true)  (pre binarySearch p sorter))) :named idPreamble_44))
-(assert (! (forall ((ds1 Atom) (ds2 Atom) (a Atom) ) (=> (and (= (isAttrDS a) true) (= (isDS ds2) true) (= (isDS ds1) true) ) (=> (and (and (= (isString a) true) (= (nameOf a) string1)) (= (uses ds1 ds2) true)) (= (valueOf a )   (valueOf string2 ) )))) :named idPreamble_45))
+; Step 0
+
+; [[Preamble, #b873e31aef6940b0a669c9396ab74334P]]
+(assert (! (= (isInt maxSize) true) :named idb873e31aef6940b0a669c9396ab74334P_0))
+
+; [[#f4bd16aef3574779933fe8f401677852P]]
+(assert (! (= (isDS quickSort) true) :named idf4bd16aef3574779933fe8f401677852P_0))
+(assert (! (= (provides quickSort sorter) true) :named idf4bd16aef3574779933fe8f401677852P_1))
+(assert (! (= (isAttrDS AD.quickSort.status) true) :named idf4bd16aef3574779933fe8f401677852P_2))
+(assert (! (= (hasAttr quickSort AD.quickSort.status) true) :named idf4bd16aef3574779933fe8f401677852P_3))
+(assert (! (= (valueOf AD.quickSort.status )   (valueOf verified ) ) :named idf4bd16aef3574779933fe8f401677852P_4))
+(assert (! (= (isAttrDS AD.quickSort.avgSpeed) true) :named idf4bd16aef3574779933fe8f401677852P_5))
+(assert (! (= (hasAttr quickSort AD.quickSort.avgSpeed) true) :named idf4bd16aef3574779933fe8f401677852P_6))
+(assert (! (= (valueOf AD.quickSort.avgSpeed )  100) :named idf4bd16aef3574779933fe8f401677852P_7))
+(assert (! (= (isAttrDS AD.quickSort.outputOrdered) true) :named idf4bd16aef3574779933fe8f401677852P_8))
+(assert (! (= (hasAttr quickSort AD.quickSort.outputOrdered) true) :named idf4bd16aef3574779933fe8f401677852P_9))
+(assert (! (= (valueOf AD.quickSort.outputOrdered )   (valueOf string0 ) ) :named idf4bd16aef3574779933fe8f401677852P_10))
+
+; [[#aa702698de2f4d6c8d02aab815927412P]]
+(assert (! (= (isRole sorter) true) :named idaa702698de2f4d6c8d02aab815927412P_0))
+
+; [[#ebe31fd2b90d4ecc9fbce1b877fbebf7P]]
+(assert (! (= (isString status) true) :named idebe31fd2b90d4ecc9fbce1b877fbebf7P_0))
+
+; [[#a2f5bdfb28bd4ed88b60ea84b0d36ae3P]]
+(assert (! (= (isInt avgSpeed) true) :named ida2f5bdfb28bd4ed88b60ea84b0d36ae3P_0))
+
+; [[#c79a350115a8447abd1440069a2da6baP]]
+(assert (! (= (isBool outputOrdered) true) :named idc79a350115a8447abd1440069a2da6baP_0))
+
+; [[#28833594b1cf4d11b9d44c2362064f36P]]
+(assert (! (= (isDS mergeSort) true) :named id28833594b1cf4d11b9d44c2362064f36P_0))
+(assert (! (= (provides mergeSort sorter) true) :named id28833594b1cf4d11b9d44c2362064f36P_1))
+(assert (! (= (isAttrDS AD.mergeSort.status) true) :named id28833594b1cf4d11b9d44c2362064f36P_2))
+(assert (! (= (hasAttr mergeSort AD.mergeSort.status) true) :named id28833594b1cf4d11b9d44c2362064f36P_3))
+(assert (! (= (valueOf AD.mergeSort.status )   (valueOf verified ) ) :named id28833594b1cf4d11b9d44c2362064f36P_4))
+(assert (! (= (isAttrDS AD.mergeSort.avgSpeed) true) :named id28833594b1cf4d11b9d44c2362064f36P_5))
+(assert (! (= (hasAttr mergeSort AD.mergeSort.avgSpeed) true) :named id28833594b1cf4d11b9d44c2362064f36P_6))
+(assert (! (= (valueOf AD.mergeSort.avgSpeed )  201) :named id28833594b1cf4d11b9d44c2362064f36P_7))
+(assert (! (= (isAttrDS AD.mergeSort.outputOrdered) true) :named id28833594b1cf4d11b9d44c2362064f36P_8))
+(assert (! (= (hasAttr mergeSort AD.mergeSort.outputOrdered) true) :named id28833594b1cf4d11b9d44c2362064f36P_9))
+(assert (! (= (valueOf AD.mergeSort.outputOrdered )   (valueOf string0 ) ) :named id28833594b1cf4d11b9d44c2362064f36P_10))
+
+; [[#49feba5cb84446138e2f055c3fc509a1P]]
+(assert (! (= (isRole sorter) true) :named id49feba5cb84446138e2f055c3fc509a1P_0))
+
+; [[#cf71c9c3fe8749b3a4c43f00e02eaf5bP]]
+(assert (! (= (isString status) true) :named idcf71c9c3fe8749b3a4c43f00e02eaf5bP_0))
+
+; [[#69c92b8488bd4c3bb07755496efbba50P]]
+(assert (! (= (isInt avgSpeed) true) :named id69c92b8488bd4c3bb07755496efbba50P_0))
+
+; [[#03b38fc3d2dd41a0b912350a1323fda8P]]
+(assert (! (= (isBool outputOrdered) true) :named id03b38fc3d2dd41a0b912350a1323fda8P_0))
+
+; [[#f9161725a13a4372a974b59892256c8cP]]
+(assert (! (= (isDS binarySearch) true) :named idf9161725a13a4372a974b59892256c8cP_0))
+(assert (! (= (consumes binarySearch sorter) true) :named idf9161725a13a4372a974b59892256c8cP_1))
+(assert (! (= (provides binarySearch searcher) true) :named idf9161725a13a4372a974b59892256c8cP_2))
+(assert (! (= (isAttrDS AD.binarySearch.status) true) :named idf9161725a13a4372a974b59892256c8cP_3))
+(assert (! (= (hasAttr binarySearch AD.binarySearch.status) true) :named idf9161725a13a4372a974b59892256c8cP_4))
+(assert (! (= (valueOf AD.binarySearch.status )   (valueOf verified ) ) :named idf9161725a13a4372a974b59892256c8cP_5))
+
+; [[#9159c26970f648749a3a4280fd02aa75P]]
+(assert (! (= (isRole sorter) true) :named id9159c26970f648749a3a4280fd02aa75P_0))
+
+; [[#bff83358185b4e69a4f74a9a8fc824d4P]]
+(assert (! (= (isRole searcher) true) :named idbff83358185b4e69a4f74a9a8fc824d4P_0))
+
+; [[#c499a8a9e8734dc6aa74d178c12f9b1cP]]
+(assert (! (= (isString status) true) :named idc499a8a9e8734dc6aa74d178c12f9b1cP_0))
+(assert (! (= (valueOf maxSize )  500) :named idc499a8a9e8734dc6aa74d178c12f9b1cP_1))
+
+; [[#f9161725a13a4372a974b59892256c8cC]]
+(assert (! (forall ((ds1 Atom) (ds2 Atom) (a Atom) ) (=> (and (= (isAttrDS a) true) (= (isDS ds2) true) (= (isDS ds1) true) ) (=> (and (and (= (isString a) true) (= (nameOf a) string1)) (= (uses ds1 ds2) true)) (= (valueOf a )   (valueOf string2 ) )))) :named idf9161725a13a4372a974b59892256c8cC_0))
 
 
 (check-sat)

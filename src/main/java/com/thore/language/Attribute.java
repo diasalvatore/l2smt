@@ -26,7 +26,7 @@ public class Attribute extends AbstractLElement {
     }
 
     public String getLPreamble() {
-        return decorateL("Is"+type+"("+name+");", false);
+        return decorateL("Is"+type+"("+name+");", "P", false);
     }
 
     public String getLContent() {

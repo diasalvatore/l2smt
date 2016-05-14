@@ -51,7 +51,9 @@
 
 	
 	<bindings>
-		<binding provider="quickSort" consumer="binarySearch" role="ruolo?" />
+		<step>
+			<binding provider="quickSort" consumer="binarySearch" role="searcher" />
+		</step>
 		<!-- <binding provider="quickSort" consumer="searcher?" role="sorter" /> -->
 		<!-- <binding provider="mergeSort" consumer="binarySearch" role="sorter" /> -->
 	</bindings>

@@ -5,8 +5,11 @@ import javax.xml.transform.*;
 import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
+import org.apache.logging.log4j.*;
 
 public class Binding extends AbstractLElement {
+    private Logger logger = LogManager.getFormatterLogger(getClass().getName());
+
 	private String role;
 	private String consumer, provider;
 	private boolean roleUnknown = false, consumerUnknown = false, providerUnknown = false;
@@ -36,6 +39,7 @@ public class Binding extends AbstractLElement {
 			unknownNumber++;
 		}
 
+        logger.debug("Parsed: %s", toString());
 	}
 
 	public String getLContent() {
@@ -69,10 +73,10 @@ public class Binding extends AbstractLElement {
 			sb.append(String.format("[unknown %3$s]\nEXISTS %3$s:Role { Precondition(%1$s, %2$s, %3$s) && Precondition(%2$s, %1$s, %3$s) && Provides(%1$s, %3$s) && Consumes(%2$s, %3$s) };", provider, consumer, uName));
 		} 
 
-        return decorateL(sb.toString(), true);
+        return decorateL(sb.toString(), "C", true);
 	}
 
     public String toString() {
-        return  "R:"+name;
+        return  "B:"+consumer+":"+provider+":"+role;
     }	
 }

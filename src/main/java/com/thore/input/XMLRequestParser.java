@@ -6,8 +6,11 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 import com.thore.language.*;
+import org.apache.logging.log4j.*;
 
 public class XMLRequestParser {
+    private static Logger logger = LogManager.getFormatterLogger(XMLRequestParser.class.getName());
+
     public static Request parseFile(String pathname) {
         Request r = new Request();
         
@@ -27,8 +30,9 @@ public class XMLRequestParser {
 
                 if (node instanceof Element) {
                     Element element = (Element) node;
-                    NodeList child_nodes = null;
+                    NodeList child_nodes = null, child_nodes2 = null;
 
+                    logger.debug("Parsing %s", element.getNodeName());
                     switch (element.getNodeName()) {
                         case "roles":
                             child_nodes = element.getElementsByTagName("role");
@@ -46,8 +50,17 @@ public class XMLRequestParser {
                             break;
 
                         case "bindings":
-                            child_nodes = element.getElementsByTagName("binding");
-                            for (int j=0; j<child_nodes.getLength(); j++) r.addB(new Binding((Element)child_nodes.item(j)));
+                            child_nodes = element.getElementsByTagName("step");
+                            logger.debug("Found %d steps", child_nodes.getLength());
+                            r.newStep();
+                            for (int j=0; j<child_nodes.getLength(); j++) {
+                                child_nodes2 = ((Element)child_nodes.item(j)).getElementsByTagName("binding");
+                                logger.debug("Found %d bindings", child_nodes2.getLength());
+                                for (int k=0; k<child_nodes2.getLength(); k++) {
+                                    r.addB(new Binding((Element)child_nodes2.item(k)));
+                                }
+                                r.newStep();
+                            }                                
                             break;
 
                         case "constraints":
@@ -58,7 +71,7 @@ public class XMLRequestParser {
                 }
             }
         } catch (Exception ex) {
-            System.err.println(ex.toString());
+            System.err.println("XML Parsing error: "+ex.toString());
         }
         return r;
     }

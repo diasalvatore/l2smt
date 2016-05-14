@@ -60,7 +60,7 @@ public class DesignSolution extends AbstractLElement {
             sb.append(a.getLPreamble());
         }
 
-        return decorateL(sb_mine.toString()+";", false) + sb.toString();
+        return decorateL(sb_mine.toString()+";", "P", false) + sb.toString();
     }
 
     public String getLContent() {
@@ -71,7 +71,7 @@ public class DesignSolution extends AbstractLElement {
             if (r.getPost() != null) sb.append("Postcondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
         }
 
-        return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", false));
+        return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", "C", false));
     }
 
     public String toString() {

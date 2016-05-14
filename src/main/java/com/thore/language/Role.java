@@ -36,7 +36,7 @@ public class Role extends AbstractLElement {
 	}
 
     public String getLPreamble() {
-        return decorateL("IsRole("+name+");", false);
+        return decorateL("IsRole("+name+");", "P", false);
     }
 
     public String toString() {

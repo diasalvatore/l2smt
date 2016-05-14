@@ -7,8 +7,10 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import java.util.*;
+import org.apache.logging.log4j.*;
 
 public class Request {
+	private Logger logger = LogManager.getFormatterLogger(getClass().getName());
 	private boolean multistep = false;
 
 	private List<AbstractLElement> all = new LinkedList<>();
@@ -16,7 +18,8 @@ public class Request {
 	private List<Role> roles = new LinkedList<>();
 	private List<DesignSolution> design_solutions = new LinkedList<>();
 	private List<RawExpression> costraints = new LinkedList<>();
-	private List<Binding> bindings = new LinkedList<>();
+	private List<List<Binding>> group_bindings = new LinkedList<>();
+	private List<Binding> bindings = null;
 
 	public void addDS(DesignSolution ds) {
 		all.add(ds);
@@ -38,8 +41,13 @@ public class Request {
 		costraints.add(c);
 	}
 
+	public void newStep() {
+		if (bindings != null) group_bindings.add(bindings);
+		logger.debug("New Step");
+		bindings = new LinkedList<>();
+	}
+
 	public void addB(Binding b) {
-		all.add(b);
 		bindings.add(b);
 	}
 
@@ -60,6 +68,13 @@ public class Request {
 			if (!e.getLContent().isEmpty()) sb.append(e.getLContent());
 		}	
 
+		int i = 0;
+		for (List<Binding> group : group_bindings) {
+			sb.append("\n\n$$$\n");
+			for (Binding b : group) {
+				sb.append(b.getLContent());
+			}
+		}
 		return sb.toString();
 	}
 }

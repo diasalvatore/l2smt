@@ -6,8 +6,11 @@ import javax.xml.parsers.*;
 import java.io.*;
 import java.util.*;
 import com.thore.language.*;
+import org.apache.logging.log4j.*;
 
 public class XMLParser {
+	private Logger logger = LogManager.getFormatterLogger(getClass().getName());
+
 	private class Signature {
 		public List<String> params;
 		public String output;
