@@ -39,7 +39,9 @@ public class DesignSolution extends AbstractLElement {
         }
     }
 
-
+    public List<Role> getRoles() {
+        return roles;
+    }
 
     public String getLPreamble() {
         StringBuilder sb_mine = new StringBuilder();
@@ -64,14 +66,15 @@ public class DesignSolution extends AbstractLElement {
     }
 
     public String getLContent() {
-        StringBuilder sb = new StringBuilder();
+        return "";
+        // StringBuilder sb = new StringBuilder();
 
-        for (Role r : roles) {
-            if (r.getPre() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
-            if (r.getPost() != null) sb.append("Postcondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
-        }
+        // for (Role r : roles) {
+        //     if (r.getPre() != null) sb.append("Precondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
+        //     if (r.getPost() != null) sb.append("Postcondition(").append(name).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
+        // }
 
-        return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", "C", false));
+        // return (sb.toString().isEmpty() ? "" : decorateL(sb.toString()+";", "C", false));
     }
 
     public String toString() {

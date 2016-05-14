@@ -1,4 +1,4 @@
-package com.thore.L2SMT;
+package com.thore.output;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;

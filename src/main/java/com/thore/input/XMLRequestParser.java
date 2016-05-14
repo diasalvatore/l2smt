@@ -17,6 +17,7 @@ public class XMLRequestParser {
         try {            
             DocumentBuilderFactory builderFactory = DocumentBuilderFactory.newInstance();
             DocumentBuilder builder = null;
+            Map<String, DesignSolution> ds_list = new HashMap<>();
 
             builder = builderFactory.newDocumentBuilder();
             Document document = builder.parse(new FileInputStream(pathname));
@@ -41,7 +42,11 @@ public class XMLRequestParser {
 
                         case "design-solutions":
                             child_nodes = element.getElementsByTagName("design-solution");
-                            for (int j=0; j<child_nodes.getLength(); j++) r.addDS(new DesignSolution((Element)child_nodes.item(j)));
+                            for (int j=0; j<child_nodes.getLength(); j++) {
+                                DesignSolution tmpDS = new DesignSolution((Element)child_nodes.item(j));
+                                ds_list.put(tmpDS.getName(), tmpDS);
+                                r.addDS(tmpDS);
+                            }
                             break;
 
                         case "attributes":
@@ -57,7 +62,7 @@ public class XMLRequestParser {
                                 child_nodes2 = ((Element)child_nodes.item(j)).getElementsByTagName("binding");
                                 logger.debug("Found %d bindings", child_nodes2.getLength());
                                 for (int k=0; k<child_nodes2.getLength(); k++) {
-                                    r.addB(new Binding((Element)child_nodes2.item(k)));
+                                    r.addB(new Binding((Element)child_nodes2.item(k), ds_list));
                                 }
                                 r.newStep();
                             }                                

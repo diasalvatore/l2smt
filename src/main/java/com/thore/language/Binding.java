@@ -6,6 +6,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 import java.io.StringWriter;
 import org.apache.logging.log4j.*;
+import java.util.*;
 
 public class Binding extends AbstractLElement {
     private Logger logger = LogManager.getFormatterLogger(getClass().getName());
@@ -14,9 +15,11 @@ public class Binding extends AbstractLElement {
 	private String consumer, provider;
 	private boolean roleUnknown = false, consumerUnknown = false, providerUnknown = false;
 	private int unknownNumber = 0;
+    private Map<String, DesignSolution> ds_list;
 
-	public Binding(Element e) {
+	public Binding(Element e, Map<String, DesignSolution> ds_list) {
 		super(e);
+        this.ds_list = ds_list;
 
 		if (e != null) {
 			role = e.getAttribute("role");
@@ -51,8 +54,26 @@ public class Binding extends AbstractLElement {
         	System.exit(-1);
         }
 
-        if (!consumerUnknown) sb.append("IsDS("+consumer+");\n ");
-        if (!providerUnknown) sb.append("IsDS("+provider+");\n ");
+        if (!consumerUnknown) { 
+            sb.append("IsDS("+consumer+");\n ");
+            DesignSolution d = ds_list.get(consumer);
+
+            for (Role r : d.getRoles()) {
+                if (r.getPre() != null) sb.append("Precondition(").append(consumer).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
+                if (r.getPost() != null) sb.append("Postcondition(").append(consumer).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
+            }
+        }
+
+        if (!providerUnknown) { 
+            sb.append("IsDS("+provider+");\n ");
+            DesignSolution d = ds_list.get(provider);
+
+            for (Role r : d.getRoles()) {
+                if (r.getPre() != null) sb.append("Precondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
+                if (r.getPost() != null) sb.append("Postcondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
+            }
+        }
+
         
         if (!roleUnknown) {
         	sb.append("IsRole("+role+");\n ");

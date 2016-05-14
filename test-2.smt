@@ -149,7 +149,9 @@
   (and (= owner binarySearch) (= role sorter))
     (if (exists ((a0 Atom) (a1 Atom) ) (and  (isAttrDS a0)  (hasAttr client a0) (= (nameOf a0) string5) (isAttrDS a1)  (hasAttr client a1) (= (nameOf a1) string3) (and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) ))(and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) )))) true false) (if 
   (and (= owner quickSort) (= role sorter))
-    (if (<= (valueOf maxSize )  500) true false) (if true true true))) 
+    (if (<= (valueOf maxSize )  500) true false) (if 
+  (and (= owner binarySearch) (= role sorter))
+    (if (exists ((a0 Atom) (a1 Atom) ) (and  (isAttrDS a0)  (hasAttr client a0) (= (nameOf a0) string5) (isAttrDS a1)  (hasAttr client a1) (= (nameOf a1) string3) (and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) ))(and (< (valueOf a0 )  200) (= (valueOf a1 )   (valueOf string0 ) )))) true false) (if true true true)))) 
 )
 
 (define-fun post ((owner Atom) (client Atom) (role Atom)) Bool 
@@ -250,6 +252,16 @@
 (assert (! (= (consumes binarySearch sorter) true) :named id0f06c55a3b9f4f8a89a028018d295ae2C_3))
 (assert (! (= (provides quickSort sorter) true) :named id0f06c55a3b9f4f8a89a028018d295ae2C_4))
 (assert (! (and (= (pre binarySearch quickSort sorter) true) (= (pre quickSort binarySearch sorter) true)) :named id0f06c55a3b9f4f8a89a028018d295ae2C_5))
+
+; Step 2
+
+; [[#106bbb2bacfc4924843c2762bbc018efC]]
+(assert (! (= (isDS binarySearch) true) :named id106bbb2bacfc4924843c2762bbc018efC_0))
+(assert (! (= (isRole sorter) true) :named id106bbb2bacfc4924843c2762bbc018efC_1))
+(assert (! (= (consumes binarySearch sorter) true) :named id106bbb2bacfc4924843c2762bbc018efC_2))
+
+; [[unknowntest]]
+(assert (! (exists ((test Atom) ) (and (= (isDS test) true)  (pre test binarySearch sorter))) :named idunknowntest_0))
 
 
 (check-sat)

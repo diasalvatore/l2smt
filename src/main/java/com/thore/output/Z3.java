@@ -1,4 +1,4 @@
-package com.thore.L2SMT;
+package com.thore.output;
 
 import java.util.*;
 import java.util.regex.*;
@@ -6,7 +6,7 @@ import org.apache.commons.lang3.math.*;
 
 
 
-public class Z3OutputParser {
+public class Z3 {
 	private List<String> input, output;
 
 	private int toInt(String s) {
@@ -22,9 +22,11 @@ public class Z3OutputParser {
 		return NumberUtils.toInt(snum.toString());
 	}
 
-	public Z3OutputParser(List<String> input, List<String> output) {
-		this.input = input;
-		this.output = output;
+	public Z3(String input) {
+		this.input = Arrays.asList(input.split("\n"));
+
+        ProcessExecutor p = new ProcessExecutor("z3 -in");
+		this.output = p.run(input);
 	}
 
 	public String raw() {

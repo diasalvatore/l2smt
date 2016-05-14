@@ -1,4 +1,4 @@
-package com.thore.L2SMT;
+package com.thore.input;
 
 import org.antlr.v4.runtime.*;
 import org.w3c.dom.*;

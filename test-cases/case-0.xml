@@ -52,10 +52,12 @@
 	
 	<bindings>
 		<step>
-			<binding provider="quickSort" consumer="binarySearch" role="searcher" />
+			<binding provider="quickSort" consumer="binarySearch" role="sorter" />
 		</step>
 		<!-- <binding provider="quickSort" consumer="searcher?" role="sorter" /> -->
-		<!-- <binding provider="mergeSort" consumer="binarySearch" role="sorter" /> -->
+		<step>
+			<binding provider="test?" consumer="binarySearch" role="sorter" />
+		</step>
 	</bindings>
 
 

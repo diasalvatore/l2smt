@@ -14,12 +14,14 @@ public class SystemState {
     private Type[] mutual_exclusive =  { Type.Bool, Type.Int, Type.Real, Type.String, Type.Role, Type.DS };
     private Map<String, Function> functions;
     private Set<String> atoms = new HashSet<>();
+    private List<String> smt_typeparam = new LinkedList<>();
+    
     private List<String> smt_expr = new LinkedList<>();
     private List<List<String>> group_smt_expr = new LinkedList<>();
-    private List<String> smt_typeparam = new LinkedList<>();
-    private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
-    private Map<String, String> stringPool = new TreeMap<>();
     
+    private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
+    private List<Map<String[], String>> group_pre = new ArrayList<>(), group_post = new ArrayList<>();
+    private Map<String, String> stringPool = new TreeMap<>();
 
     public SystemState() {
         functions = new HashMap<>();
@@ -51,13 +53,13 @@ public class SystemState {
         }
     }
 
-    private String getSMTConditions(String name) {
+    private String getSMTConditions(String name, int step) {
         String f = "";
         Map<String[], String> map = null;
         if (name.equals("pre")) {
-            map = pre;
+            map = group_pre.get(step);
         } else if (name.equals("post")) {
-            map = post;
+            map = group_post.get(step);
         }
 
         if (map != null) {
@@ -142,9 +144,21 @@ public class SystemState {
 
 
     public void newStep() {
+        logger.debug("New Step");
         group_smt_expr.add(smt_expr);
         smt_expr = new LinkedList<>();
+
+        Map<String[], String> cloned;
+
+        cloned = new HashMap<>();
+        for (Map.Entry<String[], String> entry : pre.entrySet()) cloned.put(entry.getKey(), entry.getValue());
+        group_pre.add(cloned);
+
+        cloned = new HashMap<>();
+        for (Map.Entry<String[], String> entry : post.entrySet()) cloned.put(entry.getKey(), entry.getValue());
+        group_post.add(cloned);
     }
+
 
     public void addExpr(String expr) {
         if (expr != null && !expr.isEmpty())
@@ -160,7 +174,8 @@ public class SystemState {
         String tmp;
         int i;
 
-        if (step > group_smt_expr.size() || step <= 0) { step = group_smt_expr.size(); }
+        logger.debug(String.format("Asked for: %d step", step));
+        if (step > group_smt_expr.size() || step < 0) { step = group_smt_expr.size(); }
         if (smt_expr.size() > 0) newStep();
 
         // OPTIONS
@@ -218,8 +233,8 @@ public class SystemState {
             output.append("(assert (! "+expr+"  :named _P"+(i++)+"))\n");
 
         // pre-post
-        output.append("\n\n"+getSMTConditions("pre"));
-        output.append("\n\n"+getSMTConditions("post"));
+        output.append("\n\n"+getSMTConditions("pre", step));
+        output.append("\n\n"+getSMTConditions("post", step));
 
 
         // uninterpreted functions properties
@@ -248,7 +263,7 @@ public class SystemState {
         //    "(assert (! (forall ((x Atom) (y Atom)) (=> (and (= (isDS x) true) (= (hasAttr x y) true)) (forall ((z Atom)) (=> (and (= (isDS z) true) (not (= x z))) (not (= (hasAttr z y) true)) )))) :named _UniqueHasAttr)) \n");
 
         output.append("\n\n; ---=== User Defined Assertions ===--- ");
-        for (int j=0; j<step; j++) {
+        for (int j=0; j<=step; j++) {
             List<String> expr_group = group_smt_expr.get(j);
             output.append("\n; Step "+j+"\n");
 

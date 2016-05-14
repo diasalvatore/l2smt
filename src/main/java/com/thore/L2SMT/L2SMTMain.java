@@ -1,6 +1,7 @@
 package com.thore.L2SMT;
 
 import com.thore.input.*;
+import com.thore.output.*;
 import com.thore.language.*;
 import org.antlr.v4.runtime.*;
 import org.w3c.dom.*;
@@ -70,11 +71,13 @@ public class L2SMTMain {
                     // output
                     if (!cmd.hasOption("q")) {
                         if (cmd.hasOption("o")) {
-                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"") + (j>0?"-"+j:"");
+                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"") + (ss.getStepCount()>0?"-"+j:"");
 
-                            
-                            PrintStream out = new PrintStream(new FileOutputStream(output_filename+".l"));
-                            out.print(l_source);                          
+                            PrintStream out;
+                            if (j == 0) {
+                                out = new PrintStream(new FileOutputStream(output_filename+".l"));
+                                out.print(l_source);                          
+                            }
                               
                             out = new PrintStream(new FileOutputStream(output_filename+".smt"));
                             out.print(smt_source);
@@ -94,8 +97,8 @@ public class L2SMTMain {
                     // execute
                     if (cmd.hasOption("z3")) {
                         // System.out.println("Verifying set of constraints: { "+ls.getOrderedLabels(i) + "}");
-                        ProcessExecutor p = new ProcessExecutor("z3 -in");
-                        Z3OutputParser z3_out = new Z3OutputParser(Arrays.asList(smt_source.split("\n")), p.run(smt_source));
+
+                        Z3 z3_out = new Z3(smt_source);
 
                         // printWithNumbers(smt_source.split("\n"));
                         if (cmd.hasOption("dd")) System.out.println(z3_out.raw());
