@@ -17,6 +17,7 @@ import org.apache.logging.log4j.*;
 public class L2SMTMain {
     private Logger logger = LogManager.getFormatterLogger(L2SMTMain.class.getName());    
     public static boolean DEBUG = false;
+    public static boolean SUPERDEBUG = false;
 
     public static void main(final String[] args) throws Exception {
         LCommandLineParser clp = new LCommandLineParser();
@@ -47,6 +48,9 @@ public class L2SMTMain {
                 DEBUG = true;
             }
 
+            if (cmd.hasOption("dd")) {
+                SUPERDEBUG = true;
+            }
             // XML -> L
             String[] l_sources = new String[0];
             if (xmlParsing) { 
@@ -72,24 +76,6 @@ public class L2SMTMain {
                     
                     String smt_source = ss.getSMT();
 
-                    if (!cmd.hasOption("q")) {
-                        if (cmd.hasOption("o")) {
-                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"") + (sss.size()>0?"-"+j:"");
-
-                            PrintStream out;
-                            if (j == 0) {
-                                out = new PrintStream(new FileOutputStream(output_filename+".l"));
-                                out.print(l_source);                          
-                            }
-                              
-                            out = new PrintStream(new FileOutputStream(output_filename+".smt"));
-                            out.print(smt_source);
-                        } else { // stdout
-                            if (!cmd.hasOption("d")) {
-                                System.out.println(smt_source);
-                            }
-                        }
-                    }
                 }
 
                 // execution
@@ -99,6 +85,23 @@ public class L2SMTMain {
                     exec.setTheoremProver(z3);
 
                     exec.solve();
+                    if (cmd.hasOption("o")) {
+                        i = 0;
+
+                        for (SystemState execState : exec.getStates()) {
+                            String output_filename = cmd.getOptionValue("o") + (i>0?i:"");
+                            PrintStream out;
+                            // if (j == 0) {
+                            //     out = new PrintStream(new FileOutputStream(output_filename+".l"));
+                            //     out.print(l_source);                          
+                            // }
+                              
+                            out = new PrintStream(new FileOutputStream(output_filename+".smt"));
+                            out.print(execState.getSMT());
+                            i++;
+                        }
+                    } 
+
                 }
 
             }

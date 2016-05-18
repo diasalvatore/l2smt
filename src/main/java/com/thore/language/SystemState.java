@@ -20,7 +20,29 @@ public class SystemState implements Cloneable {
     private List<String> smt_expr = new LinkedList<>();
     private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
     private Map<String, String> stringPool = new TreeMap<>();
+    private Map<String, String> resolved = new TreeMap<>();
 
+    public void addResolved(String unknown, String res) {
+        resolved.put(unknown, res);
+    }
+    public void removeResolved(String unknown) {
+        resolved.remove(unknown);
+    }
+
+    public String getVar(String smt) {
+        String sat_model = null;
+        Map<String, String> resolved = new HashMap<>();
+        List<String> allMatches = new ArrayList<String>();
+        List<String> responses = new ArrayList<String>();
+        //logger.debug("SMT: "+smt);
+        Matcher m = Pattern.compile("(\\$[a-zA-Z]+)").matcher(smt);
+        while (m.find()) {
+            //logger.debug("Found var: "+m.group(1));
+            allMatches.add(m.group(1));
+        }    
+
+        return (allMatches.size()>0 ? allMatches.get(0) : null);
+    }
 
     public SystemState() {
         functions = new HashMap<>();
@@ -209,6 +231,9 @@ public class SystemState implements Cloneable {
             String tmp_name = (lio != -1 ? atom.substring(lio+1) : atom);
             nameOfs += "(assert (= (nameOf "+atom+") "+addStringPool(tmp_name)+"))\n";
         }
+        for (String res : resolved.keySet()) {
+            output.append("(declare-const "+res.replace("$","")+" Atom)\n");
+        }
 
         // strings
         for (Map.Entry<String, String> entry : stringPool.entrySet()) {
@@ -278,7 +303,22 @@ public class SystemState implements Cloneable {
 
         output.append("\n\n; ---=== User Defined Assertions ===--- ");
         for (String expr : smt_expr) {
-            output.append(expr+"\n");
+            String var = getVar(expr);
+            
+            // logger.debug(resolved);
+            if (var != null) {
+                String replace = resolved.get(var.replace("$",""));
+                if (replace != null) {
+                    // logger.debug("Substituting: "+var+" with "+replace);
+                    output.append(expr.replace(var,replace)+"\n");    
+                } else {
+                    // logger.debug("Substituting: "+var+"failed");
+                    output.append(";").append(expr).append("\n");  
+                } 
+            } else {
+                output.append(expr+"\n");    
+            }
+
         }
 
         output.append("\n\n(check-sat)\n");

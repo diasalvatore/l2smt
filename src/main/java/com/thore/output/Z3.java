@@ -9,6 +9,7 @@ import org.apache.commons.lang3.math.*;
 
 public class Z3 implements TheoremProver {
 	private List<String> input, output;
+	private String smt;
 	private ProcessExecutor p;
 
 	private int toInt(String s) {
@@ -29,9 +30,13 @@ public class Z3 implements TheoremProver {
 	}
 
 	public void solve(SystemState s) { 
-		String smt = s.getSMT();
-		this.input  = Arrays.asList(smt.split("\n"));
+		setState(s);
 		this.output = p.run(smt);
+	}
+
+	public void setState(SystemState s) {
+		smt = s.getSMT();
+		this.input  = Arrays.asList(smt.split("\n"));
 	}
 
 	public String getRawOutput() {
@@ -60,7 +65,7 @@ public class Z3 implements TheoremProver {
 		Map<String, String> resolved = new HashMap<>();
         List<String> allMatches = new ArrayList<String>();
         List<String> responses = new ArrayList<String>();
-        Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(input.toString());
+        Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(smt);
         while (m.find()) {
             allMatches.add(m.group(1));
         }
@@ -73,7 +78,7 @@ public class Z3 implements TheoremProver {
 					i++;
 					int id = toInt(output.get(i));
 
-					m = Pattern.compile("\\(assert \\(= ([a-zA-Z]+) "+id+"\\)\\)").matcher(input.toString());
+					m = Pattern.compile("\\(assert \\(= ([a-zA-Z]+) "+id+"\\)\\)").matcher(smt);
 					if (m.find()) {
 						resolved.put(u,m.group(1));
 					}

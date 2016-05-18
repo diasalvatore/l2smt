@@ -256,13 +256,8 @@ term returns [String s, Type t]:
                       $t = Type.DS;
                       $s = $DS.text; 
                       updateAtom($DS.text, null);
-                    }
-    |       VAR     { 
-                      $t = getType("VAR", $VAR.text);
-                      $s = $VAR.text; 
-                      updateAtom($VAR.text, null);
-                    }    
-    |       ID     { 
+                    }   
+    |       ID      {  
                       $t = null;
                       $s = $ID.text; 
                       updateAtom($ID.text, null);
@@ -395,7 +390,7 @@ AND:        '&&' | 'and';
 OR:         '||' | 'or';
 NOT:        '!'  | 'not';
 IMPLIES:    '=>' | 'implies';
-STEP_DELIMITER: '$$$';
+STEP_DELIMITER: '---STEP---';
 
 // litterals
 BOOL:       'True' | 'False'| 'true' | 'false';
@@ -406,11 +401,10 @@ ATTRE:      'AE.' ID;
 ATTRDS:     'AD.' ID '.' ID;
 ROLE:       'R.' ID;
 DS:         'DS.' ID;
-VAR:        '$' ID;
 LABEL:      '[' '#'? ALLCHAR+ ']';
 
 
-ID:         [a-z] [a-zA-Z0-9]*;
+ID:         '$'?[a-z] [a-zA-Z0-9]*;
 
 
 fragment 

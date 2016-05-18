@@ -16,6 +16,10 @@ public class SystemStateExecutor {
     private List<SystemState> states;
     private TheoremProver tp;
 
+    public List<SystemState> getStates() {
+        return states;
+    }
+
     public SystemStateExecutor(List<SystemState> states) {
         this.states = states;
     }
@@ -27,12 +31,22 @@ public class SystemStateExecutor {
     public void solve() {
         int step = 0;
         boolean solved = false;
+        Map<String, String> r = new HashMap<>();
 
         while (!solved && step < states.size()) {
             SystemState s = states.get(step);
 
             log(String.format("Executing step %d", step));
+            log(r.toString());
+
+            // subs
+            for (Map.Entry<String, String> entry : r.entrySet()) {
+                s.addResolved(entry.getKey(), entry.getValue());
+            }
+
             tp.solve(s);
+            r = tp.getResolved();
+
             log(tp.toString());
 
             step++;

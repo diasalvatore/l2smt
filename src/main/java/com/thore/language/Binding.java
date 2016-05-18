@@ -68,9 +68,11 @@ public class Binding extends AbstractLElement {
             sb.append("IsDS("+provider+");\n ");
             DesignSolution d = ds_list.get(provider);
 
-            for (Role r : d.getRoles()) {
-                if (r.getPre() != null) sb.append("Precondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
-                if (r.getPost() != null) sb.append("Postcondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
+            if (d != null) {
+                for (Role r : d.getRoles()) {
+                    if (r.getPre() != null) sb.append("Precondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPre().getLContent()).append(");\n");
+                    if (r.getPost() != null) sb.append("Postcondition(").append(provider).append(", ").append(r.getName()).append(", ").append(r.getPost().getLContent()).append(");\n");
+                }
             }
         }
 

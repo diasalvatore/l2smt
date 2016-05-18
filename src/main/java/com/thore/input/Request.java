@@ -70,7 +70,7 @@ public class Request {
 
 		int i = 0;
 		for (List<Binding> group : group_bindings) {
-			sb.append("\n\n$$$\n");
+			sb.append("\n\n---STEP---\n");
 			for (Binding b : group) {
 				sb.append(b.getLContent());
 			}

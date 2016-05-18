@@ -8,9 +8,8 @@ import com.thore.language.*;
 
 
 public interface TheoremProver {
-	void    solve(SystemState s);
+    void    solve(SystemState s);
 	String  getRawOutput();
 	boolean isSat();
 	Map<String, String> getResolved();
-
 }
