@@ -17,7 +17,10 @@ public class Request {
 	private List<Attribute> attributes = new LinkedList<>();
 	private List<Role> roles = new LinkedList<>();
 	private List<DesignSolution> design_solutions = new LinkedList<>();
-	private List<RawExpression> costraints = new LinkedList<>();
+	
+	private List<List<RawExpression>> group_constraints = new LinkedList<>();
+	private List<RawExpression> constraints = new LinkedList<>();
+	
 	private List<List<Binding>> group_bindings = new LinkedList<>();
 	private List<Binding> bindings = null;
 
@@ -36,15 +39,19 @@ public class Request {
 		attributes.add(a);
 	}
 
-	public void addC(RawExpression c) {
-		all.add(c);
-		costraints.add(c);
+	public void addC(RawExpression c, boolean global) {
+		if (global)
+			all.add(c);
+		else
+			constraints.add(c);
 	}
 
 	public void newStep() {
 		if (bindings != null) group_bindings.add(bindings);
+		if (constraints != null) group_constraints.add(constraints);
 		logger.debug("New Step");
 		bindings = new LinkedList<>();
+		constraints = new LinkedList<>();
 	}
 
 	public void addB(Binding b) {
@@ -68,12 +75,18 @@ public class Request {
 			if (!e.getLContent().isEmpty()) sb.append(e.getLContent());
 		}	
 
-		int i = 0;
+		int i = 1;
 		for (List<Binding> group : group_bindings) {
 			sb.append("\n\n---STEP---\n");
 			for (Binding b : group) {
 				sb.append(b.getLContent());
 			}
+
+			logger.debug(group_constraints.get(i));
+			for (RawExpression r : group_constraints.get(i)) {
+				sb.append(r.getLContent());
+			}
+			i++;
 		}
 		return sb.toString();
 	}

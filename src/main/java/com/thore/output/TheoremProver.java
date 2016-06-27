@@ -12,4 +12,5 @@ public interface TheoremProver {
 	String  getRawOutput();
 	boolean isSat();
 	Map<String, String> getResolved();
+	String  getWrongVar();
 }

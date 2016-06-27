@@ -87,13 +87,13 @@ public class Binding extends AbstractLElement {
 
 		if (providerUnknown) {
 			String uName = provider.replace("?","");
-			sb.append(String.format("[unknown %s]\nEXISTS %s:DS { Precondition(%s, %s, %s) };", uName, uName, uName, consumer, role));
+			sb.append(String.format("[?unknown %s]\nEXISTS %s:DS { Precondition(%s, %s, %s) };", uName, uName, uName, consumer, role));
 		} else if (consumerUnknown) {
 			String uName = consumer.replace("?","");
-			sb.append(String.format("[unknown %s]\nEXISTS %s:DS { Precondition(%s, %s, %s) };", uName, uName, provider, uName, role));
+			sb.append(String.format("[?unknown %s]\nEXISTS %s:DS { Precondition(%s, %s, %s) };", uName, uName, provider, uName, role));
 		} else if (roleUnknown) {
 			String uName = role.replace("?","");
-			sb.append(String.format("[unknown %3$s]\nEXISTS %3$s:Role { Precondition(%1$s, %2$s, %3$s) && Precondition(%2$s, %1$s, %3$s) && Provides(%1$s, %3$s) && Consumes(%2$s, %3$s) };", provider, consumer, uName));
+			sb.append(String.format("[?unknown %3$s]\nEXISTS %3$s:Role { Precondition(%1$s, %2$s, %3$s) && Precondition(%2$s, %1$s, %3$s) && Provides(%1$s, %3$s) && Consumes(%2$s, %3$s) };", provider, consumer, uName));
 		} 
 
         return decorateL(sb.toString(), "C", true);

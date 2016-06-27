@@ -181,7 +181,11 @@ pred returns [String s, Type t]:
                                                                        //$t = cType($p2.t, Type.Int, $op.text + " operands should be Int"); 
                                                                        $t = Type.Bool;
                                                                        // $s = "("+transOp($op.text)+" (valueOf "+$p1.s+") (valueOf "+$p2.s+"))"; 
-                                                                       $s = "("+transOp($op.text)+valueOfOrNot($p1.s)+ " " +valueOfOrNot($p2.s)+")"; 
+                                                                       if ($op.text.equals("!=")) {
+                                                                          $s = "(not (= "+valueOfOrNot($p1.s)+ " " +valueOfOrNot($p2.s)+"))"; 
+                                                                       } else {
+                                                                          $s = "("+transOp($op.text)+" "+valueOfOrNot($p1.s)+ " " +valueOfOrNot($p2.s)+")"; 
+                                                                       }
                                                                      }
     |       p1=pred op=('+'|'-') p2=pred                             {
                                                                        // todo 
@@ -401,7 +405,7 @@ ATTRE:      'AE.' ID;
 ATTRDS:     'AD.' ID '.' ID;
 ROLE:       'R.' ID;
 DS:         'DS.' ID;
-LABEL:      '[' '#'? ALLCHAR+ ']';
+LABEL:      '[' ('?'|'#')? ALLCHAR+ ']';
 
 
 ID:         '$'?[a-z] [a-zA-Z0-9]*;

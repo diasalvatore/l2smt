@@ -4,10 +4,11 @@ import com.thore.language.*;
 import java.util.*;
 import java.util.regex.*;
 import org.apache.commons.lang3.math.*;
-
+import org.apache.logging.log4j.*;
 
 
 public class Z3 implements TheoremProver {
+	private Logger logger = LogManager.getFormatterLogger(getClass().getName());
 	private List<String> input, output;
 	private String smt;
 	private ProcessExecutor p;
@@ -44,12 +45,11 @@ public class Z3 implements TheoremProver {
 	}
 
 	public boolean isSat() {
-		if (output.size() < 1) return false;
+		for (int i=0; i<output.size(); i++) {
+			if (output.get(i).toLowerCase().equals("sat")) return true;
+		}
 
-		if (!output.get(0).toLowerCase().equals("sat")) return false;
-
-
-		return true;
+		return false;
 	}
 
 	public String findLabel(String label) {
@@ -65,7 +65,7 @@ public class Z3 implements TheoremProver {
 		Map<String, String> resolved = new HashMap<>();
         List<String> allMatches = new ArrayList<String>();
         List<String> responses = new ArrayList<String>();
-        Matcher m = Pattern.compile("\\[unknown([a-zA-Z]+)\\]").matcher(smt);
+        Matcher m = Pattern.compile("\\[\\?unknown([a-zA-Z]+)\\]").matcher(smt);
         while (m.find()) {
             allMatches.add(m.group(1));
         }
@@ -74,6 +74,7 @@ public class Z3 implements TheoremProver {
 			String o = output.get(i);
 			for (int j=0; j<allMatches.size(); j++) {
 				String u = allMatches.get(j);
+
 				if (o.indexOf("(define-fun "+u, 0) != -1) {
 					i++;
 					int id = toInt(output.get(i));
@@ -87,6 +88,25 @@ public class Z3 implements TheoremProver {
 		}	
 
 		return resolved;
+	}
+
+	public String getWrongVar() {
+		StringBuilder sb = new StringBuilder();
+		String unsat_core = null;
+		if (output.size() > 1) unsat_core = output.get(1);
+
+        Matcher m = Pattern.compile("\\$([a-zA-Z]+)").matcher(smt);
+        m.find();
+        return m.group(1);
+  //       System.out.println(m.group(1));
+
+
+		// String[] labels = unsat_core.substring(1, unsat_core.length()-1).split(" ");
+		// for (int i=0;i<labels.length;i++) {
+		// 	sb.append("\n"+i).append("   ").append(findLabel(labels[i]));
+		// }		
+
+		// return sb.toString();
 	}
 
 	@Override

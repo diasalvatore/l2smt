@@ -13,7 +13,7 @@
 			<roles>
 				<role type="provided" name="sorter">
 					<pre>maxSize &lt;= 500</pre>
-					<post></post>
+					<post>false</post>
 				</role>
 			</roles>
 		</design-solution>
@@ -21,7 +21,7 @@
 		<design-solution name="mergeSort">
 			<attributes>
 				<attribute name="status" type="string">verified</attribute>
-				<attribute name="avgSpeed" type="integer">201</attribute>
+				<attribute name="avgSpeed" type="integer">199</attribute>
 				<attribute name="outputOrdered" type="boolean">true</attribute>
 			</attributes>
 			<roles>
@@ -57,6 +57,9 @@
 		<!-- <binding provider="quickSort" consumer="searcher?" role="sorter" /> -->
 		<step>
 			<binding provider="$ordinatore" consumer="binarySearch" role="sorter" />
+			<constraint label="test">
+				$ordinatore != quickSort;
+			</constraint>			
 		</step>
 	</bindings>
 

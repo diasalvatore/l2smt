@@ -21,10 +21,20 @@ public class SystemState implements Cloneable {
     private Map<String[], String> pre = new HashMap<>(), post = new HashMap<>();
     private Map<String, String> stringPool = new TreeMap<>();
     private Map<String, String> resolved = new TreeMap<>();
+    private Map<String, String> novar = new TreeMap<>();
+
+    public boolean atomsContains(String a) {
+        return atoms.contains(a);
+    }
 
     public void addResolved(String unknown, String res) {
         resolved.put(unknown, res);
     }
+
+    public void addNoVar(String unknown, String res) {
+        novar.put(unknown, res);
+    }
+
     public void removeResolved(String unknown) {
         resolved.remove(unknown);
     }
@@ -254,6 +264,7 @@ public class SystemState implements Cloneable {
         i = 0;
         for (String atom : atoms) {
             output.append("(assert (= "+atom+" "+i+"))\n");
+            // output.append("(assert (= (valueOf "+atom+") "+i+"))\n");
             i++;
         }
 
@@ -301,16 +312,35 @@ public class SystemState implements Cloneable {
         //output.append("\n; AttrDS haven't multiple owners\n"+
         //    "(assert (! (forall ((x Atom) (y Atom)) (=> (and (= (isDS x) true) (= (hasAttr x y) true)) (forall ((z Atom)) (=> (and (= (isDS z) true) (not (= x z))) (not (= (hasAttr z y) true)) )))) :named _UniqueHasAttr)) \n");
 
-        output.append("\n\n; ---=== User Defined Assertions ===--- ");
+        output.append("\n\n; ---=== User Defined Assertions ===---\n ");
+
+        output.append("\n; <no>\n ");
+        for (Map.Entry<String, String> no : novar.entrySet()) {
+            output.append("(not (= "+no.getKey()+" "+no.getValue()+"))\n");
+        }
+        output.append("\n; </no>\n ");
+
         for (String expr : smt_expr) {
+            // ; [[?unknownordinatore]]
+            // (assert (! (exists ((ordinatore Atom) ) (and (= (isDS ordinatore) true)  (pre ordinatore binarySearch sorter))) :named id?unknownordinatore_0))
+            Matcher m = Pattern.compile("\\[\\?unknown([a-zA-Z]+)\\]").matcher(expr);
+            if (m.find()) {
+                String noVarName  = m.group(1);
+                String noVarValue = novar.get(noVarName);
+                if (noVarValue != null) {
+                    expr = expr.replace("(and ", "(and (not (= "+noVarName+" "+noVarValue+")) ");
+                }
+            }
+
+
             String var = getVar(expr);
             
-            // logger.debug(resolved);
+            // logger.debug("["+smt_expr.size()+"] "+resolved);
             if (var != null) {
                 String replace = resolved.get(var.replace("$",""));
                 if (replace != null) {
                     // logger.debug("Substituting: "+var+" with "+replace);
-                    output.append(expr.replace(var,replace)+"\n");    
+                    output.append(expr.replace(var,replace)).append(" ; ").append(var).append("\n");    
                 } else {
                     // logger.debug("Substituting: "+var+"failed");
                     output.append(";").append(expr).append("\n");  

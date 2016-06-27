@@ -57,12 +57,18 @@ public class XMLRequestParser {
                         case "bindings":
                             child_nodes = element.getElementsByTagName("step");
                             logger.debug("Found %d steps", child_nodes.getLength());
-                            r.newStep();
+                            r.newStep();                            
                             for (int j=0; j<child_nodes.getLength(); j++) {
                                 child_nodes2 = ((Element)child_nodes.item(j)).getElementsByTagName("binding");
                                 logger.debug("Found %d bindings", child_nodes2.getLength());
                                 for (int k=0; k<child_nodes2.getLength(); k++) {
                                     r.addB(new Binding((Element)child_nodes2.item(k), ds_list));
+                                }
+
+                                child_nodes2 = ((Element)child_nodes.item(j)).getElementsByTagName("constraint");
+                                logger.debug("Found %d constraints", child_nodes2.getLength());
+                                for (int k=0; k<child_nodes2.getLength(); k++) {
+                                    r.addC(new RawExpression((Element)child_nodes2.item(k)), false);
                                 }
                                 r.newStep();
                             }                                
@@ -70,7 +76,7 @@ public class XMLRequestParser {
 
                         case "constraints":
                             child_nodes = element.getElementsByTagName("constraint");
-                            for (int j=0; j<child_nodes.getLength(); j++) r.addC(new RawExpression((Element)child_nodes.item(j)));
+                            for (int j=0; j<child_nodes.getLength(); j++) r.addC(new RawExpression((Element)child_nodes.item(j)), true);
                             break;
                     }
                 }
